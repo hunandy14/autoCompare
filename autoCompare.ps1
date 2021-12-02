@@ -6,27 +6,28 @@ function getCommitFile {
         [switch] $Expand
     )
     $CmDir = "CommitFile"
+    # 獲取差異清單
     Set-location $gitDir
     $F1 = "$PSScriptRoot\$CmDir\$CM1.zip".Replace("\", "/")
     New-Item -ItemType File -Path $F1 -Force | Out-Null
     $F2 = "$PSScriptRoot\$CmDir\$CM2.zip".Replace("\", "/")
     New-Item -ItemType File -Path $F2 -Force | Out-Null
-    
+    # 打包差異的檔案
     $diff_list = "`$(git diff --name-only $CM1 $CM2)"
     $cmd = "git archive -o $F1 $CM1 $diff_list"
     Invoke-Expression $cmd
     $cmd = "git archive -o $F2 $CM2 $diff_list"
     Invoke-Expression $cmd
-    
-    Set-location $PSScriptRoot\$CmDir
+    # 建立差異清單檔案
     $FileContent = $(git diff --name-only $CM1 $CM2)
+    Set-location $PSScriptRoot\$CmDir
     $FileContent | Out-File -Encoding ASCII "diff-list.txt"
-    
+    # 解壓縮並刪除檔案
     if ($Expand) {
         Expand-Archive $F1 -Force; Remove-Item $F1
         Expand-Archive $F2 -Force; Remove-Item $F2
     }
-    
+    # 恢復工作目錄
     Set-location $PSScriptRoot
 }
 # ===========================================================
