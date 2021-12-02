@@ -56,9 +56,8 @@ function WinMergeU_Report2 {
         [string] $D2,
         [System.Object] $List,
         [string] $OutDir,
-        [switch] $Mode_S
+        [bool] $Mode_S
     )
-    if ($OutDir -eq "") { $OutDir = "$PSScriptRoot\WinMergOut" }
     foreach ($item in $List) {
         # 獲取兩個資料夾原始檔
         $_D1 = $D1 + "\" + $item
@@ -80,24 +79,87 @@ function CompareDir {
     param (
         [string] $dir1,
         [string] $dir2, 
-        [string] $ListFileName 
+        [string] $ListFileName,
+        [string] $OutDir
     )
+    if ($OutDir -eq "") { $OutDir = "$PSScriptRoot\WinMergOut" }
     $List = (Get-Content $ListFileName)
     if ($List[0].ToString().Length -ge 20) {
-        WinMergeU_Report2 $dir1 $dir2 $List -Mode_S
+        WinMergeU_Report2 $dir1 $dir2 $List $OutDir -Mode_S
     } else {
-        # WinMergeU_Report2 $dir1 $dir2 $List
+        WinMergeU_Report2 $dir1 $dir2 $List $OutDir
     }
+    return $OutDir
 }
 # ===========================================================
+function createIndexHTML {
+    param (
+        [string] $site,
+        [string] $Mode_S ,
+        [string] $ListFileName,
+        [string] $indexFileName
+    )
+    Set-Location $cmprOutDir
+    $docList = Get-Content $ListFileName
 
+    # 開頭
+    $Content = "" +
+    '<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+    </head>
+    <body>
+    '
+    # 產生各個項目
+    for ($i = 0; $i -lt $docList.Count; $i++) {
+        $item = $docList[$i]
+        if ($Mode_S) {
+            $MainDir = $item.Substring(0, $item.IndexOf("/"))
+            $idx=$item.LastIndexOf("/") + 1
+            $FileName = $item.Substring($idx, $item.Length - $idx )
+            $item2 = $MainDir + "/" + $FileName
+            $address = $site + "/" + $item2 + ".html"
+            $linkName = $item2
+        } else {
+            $address = $site + "/" + $item + ".html"
+            $linkName = $item
+        }
+        
+        $Number = '<span style="width: 30px;display: inline-block;">' + ($i+1) + '</span>'
+
+        $out = '<div style="height: 22px">' + $Number + '<a href="' + $address + '">' 
+        $out = $out + '' + $linkName + ''
+        $out = $out + '</a></div>'
+        # Write-Host $out
+
+        $Content = $Content + $out + "`n"
+    }
+    # 結尾
+    $Content = $Content + '
+    </body>
+    </html>
+    '
+    # 輸出
+    [System.IO.File]::WriteAllLines($indexFileName, $Content);
+}
 # ===========================================================
 $gitDir = "Z:\gitRepo\doc_develop"
 $CM1 = "INIT"
 $CM2 = "master"
 
 # 獲取CommitFile
-# $dir = getCommitFile $CM1 $CM2 $gitDir -Expand
-
+$dir = getCommitFile $CM1 $CM2 $gitDir -Expand
 # 建立差異html
-CompareDir $dir[0] $dir[1] $dir[2]
+$cmprOutDir = CompareDir $dir[0] $dir[1] $dir[2]
+
+# 建立indexJTML
+$Mode_S = $false
+$ListFileName = $dir[2]
+$indexFileName = "$cmprOutDir\index.html"
+createIndexHTML $cmprOutDir $Mode_S $ListFileName $indexFileName
+
+# ===========================================================
