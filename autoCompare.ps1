@@ -147,17 +147,18 @@ function createIndexHTML {
     [System.IO.File]::WriteAllLines($indexFileName, $Content);
 }
 # ===========================================================
+$projectName = "doc_develop"
 $gitDir = "Z:\gitRepo\doc_develop"
 $CM1 = "INIT"
 $CM2 = "master"
+$Mode_S = $false
 
 # 獲取CommitFile
-$dir = getCommitFile $CM1 $CM2 $gitDir -Expand
+# $dir = getCommitFile $CM1 $CM2 $gitDir -Expand -dstDir ("$PSScriptRoot\$projectName"+"_update")
 # 建立差異html
-$cmprOutDir = CompareDir $dir[0] $dir[1] $dir[2]
+# $cmprOutDir = CompareDir $dir[0] $dir[1] $dir[2] ("$PSScriptRoot\$projectName"+"_diff")
 
 # 建立indexJTML
-$Mode_S = $false
 $ListFileName = $dir[2]
 $indexFileName = "$cmprOutDir\index.html"
 createIndexHTML $cmprOutDir $Mode_S $ListFileName $indexFileName
