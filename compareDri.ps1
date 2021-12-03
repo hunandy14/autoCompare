@@ -1,52 +1,4 @@
 # ===========================================================
-function WinMergeU_Core {
-    param (
-        [Parameter(Position = 0)]
-        [string] $F1,
-        [Parameter(Position = 1)]
-        [string] $F2,
-        [Parameter(Position = 2, ParameterSetName = "")]
-        [string] $Output,
-        [Parameter(ParameterSetName = "")]
-        [Int16] $Line = 3
-    )
-    if ($Output -eq "") {
-        if ($PSScriptRoot) { $curDir = $PSScriptRoot } else { $curDir = (Get-Location).Path }
-        $Output = "$curDir\FileDiff-Out.html"
-        Write-Host "    File Outout to: [ $Output ]"
-    }
-    New-Item -ItemType File -Path $Output -Force | Out-Null
-    WinMergeU $F1 $F2 -cfg Settings/ShowIdentical=0 -cfg Settings/DiffContextV2=$Line -minimize -noninteractive -u -or $Output
-}
-function WinMergeU_Dir {
-    param (
-        [string] $dir1,
-        [string] $dir2,
-        [System.Object] $listFileName,
-        [string] $outDir,
-        [switch] $Mode_S
-    )
-    $collection = (Get-Content $listFileName)
-    foreach ($item in $collection) {
-        # 獲取兩個資料夾原始檔
-        $F1 = $dir1 + "\" + $item
-        $F2 = $dir2 + "\" + $item
-        # 簡化路徑輸出檔案路徑
-        if ($Mode_S) {
-            $MainDir = $item.Substring(0, $item.IndexOf("/"))
-            $idx = $item.LastIndexOf("/") + 1
-            $FileName = $item.Substring($idx, $item.Length - $idx )
-            $outName = $outDir + "\" + $MainDir + "\" + $FileName + ".html"
-        }
-        else {
-            $outName = $outDir + "\" + $item.Replace("/", "\") + ".html"
-        }
-        # 輸出比對檔案
-        WinMergeU_Core $F1 $F2 $outName -Line 3
-        return
-    }
-}
-# ===========================================================
 function createIndexHTML {
     param (
         [string] $site,
@@ -101,6 +53,56 @@ function createIndexHTML {
     '
     # 輸出
     [System.IO.File]::WriteAllLines($indexFileName, $Content);
+}
+# ===========================================================
+function WinMergeU_Core {
+    param (
+        [Parameter(Position = 0)]
+        [string] $F1,
+        [Parameter(Position = 1)]
+        [string] $F2,
+        [Parameter(Position = 2, ParameterSetName = "")]
+        [string] $Output,
+        [Parameter(ParameterSetName = "")]
+        [Int16] $Line = 3
+    )
+    if ($Output -eq "") {
+        if ($PSScriptRoot) { $curDir = $PSScriptRoot } else { $curDir = (Get-Location).Path }
+        $Output = "$curDir\FileDiff-Out.html"
+        Write-Host "    File Outout to: [ $Output ]"
+    }
+    New-Item -ItemType File -Path $Output -Force | Out-Null
+    WinMergeU $F1 $F2 -cfg Settings/ShowIdentical=0 -cfg Settings/DiffContextV2=$Line -minimize -noninteractive -u -or $Output
+}
+function WinMergeU_Dir {
+    param (
+        [string] $dir1,
+        [string] $dir2,
+        [System.Object] $listFileName,
+        [string] $outDir,
+        [switch] $Mode_S
+    )
+    $AddreseList  = @()
+    $FileNameList = @()
+    
+    $collection = (Get-Content $listFileName)
+    foreach ($item in $collection) {
+        # 獲取兩個資料夾原始檔
+        $F1 = $dir1 + "\" + $item
+        $F2 = $dir2 + "\" + $item
+        # 簡化路徑輸出檔案路徑
+        if ($Mode_S) {
+            $MainDir = $item.Substring(0, $item.IndexOf("/"))
+            $idx = $item.LastIndexOf("/") + 1
+            $FileName = $item.Substring($idx, $item.Length - $idx )
+            $outName = $outDir + "\" + $MainDir + "\" + $FileName + ".html"
+        }
+        else {
+            $outName = $outDir + "\" + $item.Replace("/", "\") + ".html"
+        }
+        # 輸出比對檔案
+        WinMergeU_Core $F1 $F2 $outName -Line 3
+    }
 }
 # ===========================================================
 if ($PSScriptRoot) { $curDir = $PSScriptRoot } else { $curDir = (Get-Location).Path }
