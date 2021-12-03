@@ -1,13 +1,22 @@
 # ===========================================================
 function WinMergeU_Core {
     param (
+        [Parameter(Position = 0)]
         [string] $F1,
+        [Parameter(Position = 1)]
         [string] $F2,
+        [Parameter(Position = 2, ParameterSetName = "")]
         [string] $Output,
-        [string] $line = 3
+        [Parameter(ParameterSetName = "")]
+        [Int16] $Line = 3
     )
+    if ($Output -eq "") {
+        if ($PSScriptRoot) { $curDir = $PSScriptRoot } else { $curDir = (Get-Location).Path }
+        $Output = "$curDir\FileDiff-Out.html"
+        Write-Host "    File Outout to: [ $Output ]"
+    }
     New-Item -ItemType File -Path $Output -Force | Out-Null
-    WinMergeU $F1 $F2 -cfg Settings/ShowIdentical=0 -cfg Settings/DiffContextV2=$line -minimize -noninteractive -u -or $Output
+    WinMergeU $F1 $F2 -cfg Settings/ShowIdentical=0 -cfg Settings/DiffContextV2=$Line -minimize -noninteractive -u -or $Output
 }
 function WinMergeU_Dir {
     param (
@@ -33,7 +42,8 @@ function WinMergeU_Dir {
             $outName = $outDir + "\" + $item.Replace("/", "\") + ".html"
         }
         # 輸出比對檔案
-        WinMergeU_Core $F1 $F2 $outName
+        WinMergeU_Core $F1 $F2 $outName -Line 3
+        return
     }
 }
 # ===========================================================
@@ -75,7 +85,7 @@ function createIndexHTML {
             $linkName = $item
         }
         
-        $Number = '<span style="width: 30px;display: inline-block;">' + ($i + 1) + '</span>'
+        $Number = '<span style="width: 30px;display: inLine-block;">' + ($i + 1) + '</span>'
 
         $out = '<div style="height: 22px">' + $Number + '<a href="' + $address + '">' 
         $out = $out + '' + $linkName + ''
