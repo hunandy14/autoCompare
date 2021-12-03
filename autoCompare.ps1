@@ -56,7 +56,7 @@ function WinMergeU_Report2 {
         [string] $D2,
         [System.Object] $List,
         [string] $OutDir,
-        [bool] $Mode_S
+        [switch] $Mode_S
     )
     foreach ($item in $List) {
         # 獲取兩個資料夾原始檔
@@ -147,16 +147,17 @@ function createIndexHTML {
     [System.IO.File]::WriteAllLines($indexFileName, $Content);
 }
 # ===========================================================
-$projectName = "doc_develop"
-$gitDir = "Z:\gitRepo\doc_develop"
+$projectName = "java_develop"
+$gitDir = "D:\Users\71856726\OneDrive - Hitachi Group\HitachiXPC\Desktop\ap\gitRepo\Eclipse_develop"
 $CM1 = "INIT"
 $CM2 = "master"
 $Mode_S = $false
+$PSScriptRoot2="D:\Work\autoCompare"
 
 # 獲取CommitFile
-# $dir = getCommitFile $CM1 $CM2 $gitDir -Expand -dstDir ("$PSScriptRoot\$projectName"+"_update")
+$dir = getCommitFile $CM1 $CM2 $gitDir -Expand -dstDir ("$PSScriptRoot2\$projectName"+"_update")
 # 建立差異html
-# $cmprOutDir = CompareDir $dir[0] $dir[1] $dir[2] ("$PSScriptRoot\$projectName"+"_diff")
+$cmprOutDir = CompareDir $dir[0] $dir[1] $dir[2] ("$PSScriptRoot2\$projectName"+"_diff")
 
 # 建立indexJTML
 $ListFileName = $dir[2]
