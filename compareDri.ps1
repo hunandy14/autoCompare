@@ -1,4 +1,37 @@
 # ===========================================================
+function HTML_Head ($data){
+return '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+' + $data + "`n</body>`n</html>`n"
+}
+
+function HTML_Tag {
+    param (
+        [Parameter(Position = 0)]
+        [string] $name,
+        [Parameter(Position = 1)]
+        [string] $value,
+        [Parameter(ParameterSetName = "")]
+        [string] $style,
+        [Parameter(ParameterSetName = "")]
+        [string] $href
+    )
+    if($style -ne "") {$style = " style=`"$style`""}
+    if($href -ne "") {$href = " href=`"$href`""}
+    return "<$name$style$href>$value</$name>"
+}
+# (HTML_Head (HTML_Tag "div" (HTML_Tag "a" "Link" -h "https://www.google.com.tw/") -s "width: 100px")) > index.html
+
+
+
+# ===========================================================
 function createIndexHTML {
     param (
         [string] $site,
@@ -117,7 +150,7 @@ $dir1   = "$diffDir\$CM1"
 $dir2   = "$diffDir\$CM2"
 $list   = "$diffDir\$diffList"
 $outDir = "$outDir"
-WinMergeU_Dir $dir1 $dir2 $list $outDir
+# WinMergeU_Dir $dir1 $dir2 $list $outDir
 
 
 # 建立indexJTML
