@@ -21,11 +21,14 @@ function HTML_Tag {
         [Parameter(ParameterSetName = "")]
         [string] $style,
         [Parameter(ParameterSetName = "")]
-        [string] $href
+        [string] $href,
+        [Parameter(ParameterSetName = "")]
+        [string] $Attributes
     )
     if($style -ne "") {$style = " style=`"$style`""}
     if($href -ne "") {$href = " href=`"$href`""}
-    return "<$name$style$href>$value</$name>"
+    if($Attributes -ne "") {$Attributes = " $Attributes"}
+    return "<$name$style$href$Attributes>$value</$name>"
 }
 # (HTML_Head (HTML_Tag "div" (HTML_Tag "a" "Link" -h "https://www.google.com.tw/") -s "width: 100px")) > index.html
 
