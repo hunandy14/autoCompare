@@ -43,7 +43,7 @@ function WinMergeU_Core {
     )
     if ($Output -eq "") {
         if ($PSScriptRoot) { $curDir = $PSScriptRoot } else { $curDir = (Get-Location).Path }
-        $Output = "$curDir\FileDiff-Out.html"
+        $Output = "$curDir\FileDiff-OUT.html"
         Write-Host "    File Outout to: [ $Output ]"
     }
     New-Item -ItemType File -Path $Output -Force | Out-Null
@@ -63,6 +63,11 @@ function WinMergeU_Dir {
         [Int16] $Line = 3,
         [switch] $Mode_S
     )
+    if ($outDir -eq "") {
+        if ($PSScriptRoot) { $curDir = $PSScriptRoot } else { $curDir = (Get-Location).Path }
+        $outDir = "$curDir\FileDiff-OUT"
+        Write-Host "    File Outout to: [ $outDir ]"
+    }
     $Content = ""
     $idx = 1
     $collection = (Get-Content $listFileName)
@@ -73,14 +78,14 @@ function WinMergeU_Dir {
         # 簡化路徑輸出檔案路徑
         if ($Mode_S) {
             $MainDir = $item.Substring(0, $item.IndexOf("/"))
-            $idx = $item.LastIndexOf("/") + 1
-            $FileName = "$MainDir\" + $item.Substring($idx, $item.Length - $idx )
+            $idxOf = $item.LastIndexOf("/") + 1
+            $FileName = "$MainDir\" + $item.Substring($idxOf, $item.Length - $idxOf )
         }
         else {
             $FileName = $item.Replace("/", "\")
         }
         # 輸出比對檔案
-        $outName = "$outDir\$FileName.html"
+        $outName = "$outDir\$FileName" + ".html"
         WinMergeU_Core $F1 $F2 $outName -Line $Line
         
         # HTML項目
@@ -90,7 +95,9 @@ function WinMergeU_Dir {
         $Content = $Content + "$div`n"
         $idx = $idx+1
     }
-    [System.IO.File]::WriteAllLines("$outDir\index.html", (HTML_Head $Content));
+    $index = "$outDir\index.html"
+    [System.IO.File]::WriteAllLines($index, (HTML_Head $Content))
+    Invoke-Expression $index
 }
 # ==================================================================================================
 if ($PSScriptRoot) { $curDir = $PSScriptRoot } else { $curDir = (Get-Location).Path }
