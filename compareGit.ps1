@@ -55,8 +55,11 @@ function test_compareGit {
     $gitDir      = "Z:\gitRepo\doc_develop"
     $outDir      = "Z:\work"
     
-    compareGitCommit $CM1 $CM2 $gitDir -outDir $outDir
-    # compareGitCommit $CM1 $CM2 $gitDir -outDir $outDir -projectName "doc_1130"
-    # compareGitCommit $CM1 $CM2 $gitDir 
+    compareGitCommit $CM1 $CM2 $gitDir -outDir $outDir -projectName "doc_1130"
+    # compareGitCommit $CM1 $CM2 $gitDir -outDir $outDir
     # compareGitCommit $CM1 $CM2 $gitDir                 -projectName "doc_1130"
+    # compareGitCommit $CM1 $CM2 $gitDir 
 }
+
+test_compareGit
+# ==================================================================================================
