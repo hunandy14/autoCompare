@@ -39,15 +39,14 @@ function WinMergeU_Core {
         [Parameter(Position = 2, ParameterSetName = "")]
         [string] $Output,
         [Parameter(ParameterSetName = "")]
-        [Int16] $Line
+        [string] $Line
     )
+    if (!$Line) { $Line = 3 }
     if ($Output -eq "") {
         if ($PSScriptRoot) { $curDir = $PSScriptRoot } else { $curDir = (Get-Location).Path }
         $Output = "$curDir\FileDiff-OUT.html"
         Write-Host "    File Outout to: [ $Output ]"
     }
-    if (!$Line) { $Line = 3 }
-    "Line[$Line]"
     New-Item -ItemType File -Path $Output -Force | Out-Null
     WinMergeU $F1 $F2 -cfg Settings/ShowIdentical=0 -cfg Settings/DiffContextV2=$Line -minimize -noninteractive -u -or $Output
 }
@@ -62,7 +61,7 @@ function WinMergeU_Dir {
         [Parameter(Position = 3, ParameterSetName = "")]
         [string] $outDir,
         [Parameter(ParameterSetName = "")]
-        [Int16] $Line,
+        [string] $Line,
         [switch] $CompactPATH
     )
     if ($outDir -eq "") {
@@ -115,6 +114,7 @@ function Test_compareDir {
     $list    = "$diffDir\$list"
     $outDir  = "$diffDir\$outDir"
      
-    WinMergeU_Dir $dir1 $dir2 $list -outDir $outDir -Line 3 -CompactPATH
+    WinMergeU_Dir $dir1 $dir2 $list -outDir $outDir -Line 5 -CompactPATH
 }
+# Test_compareDir
 # ==================================================================================================

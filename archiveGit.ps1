@@ -88,4 +88,5 @@ function Test_compareGit {
     archiveCommit $CM2 $List $gitDir -outFile "source_after.zip"  -outDir $outDir -Expand:$Expand
     [System.IO.File]::WriteAllLines($listFileName, $list);
 }
+# Test_compareGit
 # ==================================================================================================

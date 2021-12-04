@@ -12,7 +12,7 @@ function compareGitCommit {
         [Parameter(ParameterSetName = "")]
         [string] $projectName,
         [Parameter(ParameterSetName = "")]
-        [Int16] $Line,
+        [string] $Line,
         [switch] $CompactPATH
         
     )
@@ -33,10 +33,10 @@ function compareGitCommit {
     } elseif (!$outDir) { $outDir = "$curDir\compare_source" }
     # ===================================================
     # 從git提交點中獲取檔案
-    # $list = getCommitDiff $CM1 $CM2 -gitDir $gitDir
-    # archiveCommit $CM1 $List $gitDir -outFile "source_before.zip" -outDir $outDir -Expand
-    # archiveCommit $CM2 $List $gitDir -outFile "source_after.zip"  -outDir $outDir -Expand
-    # [System.IO.File]::WriteAllLines("$outDir\$listFileName", $list);
+    $list = getCommitDiff $CM1 $CM2 -gitDir $gitDir
+    archiveCommit $CM1 $List $gitDir -outFile "source_before.zip" -outDir $outDir -Expand
+    archiveCommit $CM2 $List $gitDir -outFile "source_after.zip"  -outDir $outDir -Expand
+    [System.IO.File]::WriteAllLines("$outDir\$listFileName", $list);
     # ===================================================
     $srcDir  = $outDir
 
@@ -65,8 +65,7 @@ function test_compareGit {
     # compareGitCommit $CM1 $CM2 $gitDir                 -projectName "doc_1130"
     # compareGitCommit $CM1 $CM2 $gitDir 
     
-    compareGitCommit $CM1 $CM2 $gitDir -outDir $outDir -projectName "doc_1130"
+    compareGitCommit $CM1 $CM2 $gitDir -outDir $outDir -projectName "doc_1130" -CompactPATH
 }
-
 test_compareGit
 # ==================================================================================================
