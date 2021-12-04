@@ -63,27 +63,29 @@ function archiveCommitDiff {
     archiveCommit $CM1 $diff_list $gitDir -outDir $outDir -Expand:$Expand
 }
 # ==================================================================================================
-# 依據特定清單獲取提交點檔案
-# $List = @("css/DMWD1013.css", "css/DMWZ01.css")
-# archiveCommit $CM2 $List $gitDir -outDir $outDir -Expand
-# archiveCommit $CM1 $List $gitDir -outDir $outDir -Expand
-# 獲取兩個差一點間的檔案修改
-# archiveCommitDiff $CM1 $CM2 $gitDir -outDir $outDir -Expand
-# ==================================================================================================
-$projectName = "doc_diff"
-$listFileName = "diff-list.txt"
+function Test_compareGit {
+    # 依據特定清單獲取提交點檔案
+    # $List = @("css/DMWD1013.css", "css/DMWZ01.css")
+    # archiveCommit $CM2 $List $gitDir -outDir $outDir -Expand
+    # archiveCommit $CM1 $List $gitDir -outDir $outDir -Expand
+    # 獲取兩個差一點間的檔案修改
+    # archiveCommitDiff $CM1 $CM2 $gitDir -outDir $outDir -Expand
 
-$gitDir = "Z:\gitRepo\doc_develop"
-$CM1 = "master"
-$CM2 = "INIT"
-$outDir = "Z:\work"
-
-# 輸出 WinMerge 比較清單
-$list = getCommitDiff $CM1 $CM2 -gitDir $gitDir
-$listFileName = "$outDir\$projectName\$listFileName"
-$outDir = "$outDir\$projectName"
-$Expand = $true
-archiveCommit $CM1 $List $gitDir -outFile "source_before.zip" -outDir $outDir -Expand:$Expand
-archiveCommit $CM2 $List $gitDir -outFile "source_after.zip"  -outDir $outDir -Expand:$Expand
-[System.IO.File]::WriteAllLines($listFileName, $list);
+    $projectName = "doc_diff"
+    $listFileName = "diff-list.txt"
+    
+    $gitDir = "Z:\gitRepo\doc_develop"
+    $CM1 = "master"
+    $CM2 = "INIT"
+    $outDir = "Z:\work"
+    
+    # 輸出 WinMerge 比較清單
+    $list = getCommitDiff $CM1 $CM2 -gitDir $gitDir
+    $listFileName = "$outDir\$projectName\$listFileName"
+    $outDir = "$outDir\$projectName"
+    $Expand = $true
+    archiveCommit $CM1 $List $gitDir -outFile "source_before.zip" -outDir $outDir -Expand:$Expand
+    archiveCommit $CM2 $List $gitDir -outFile "source_after.zip"  -outDir $outDir -Expand:$Expand
+    [System.IO.File]::WriteAllLines($listFileName, $list);
+}
 # ==================================================================================================

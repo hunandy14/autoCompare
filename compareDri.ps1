@@ -98,19 +98,21 @@ function WinMergeU_Dir {
     Invoke-Expression $index
 }
 # ==================================================================================================
-if ($PSScriptRoot) { $curDir = $PSScriptRoot } else { $curDir = (Get-Location).Path }
-
-$diffDir = "Z:\Work\doc_diff"
-
-$dir1    = "source_after"
-$dir2    = "source_before"
-$list    = "diff-list.txt"
-$outDir  = "source_cmp"
- 
-$dir1    = "$diffDir\$dir1"
-$dir2    = "$diffDir\$dir2"
-$list    = "$diffDir\$list"
-$outDir  = "$diffDir\$outDir"
- 
-WinMergeU_Dir $dir1 $dir2 $list -outDir $outDir -Line 3 -Mode_S
+function Test_compareDir {
+    if ($PSScriptRoot) { $curDir = $PSScriptRoot } else { $curDir = (Get-Location).Path }
+    
+    $diffDir = "Z:\Work\doc_diff"
+    
+    $dir1    = "source_after"
+    $dir2    = "source_before"
+    $list    = "diff-list.txt"
+    $outDir  = "source_cmp"
+     
+    $dir1    = "$diffDir\$dir1"
+    $dir2    = "$diffDir\$dir2"
+    $list    = "$diffDir\$list"
+    $outDir  = "$diffDir\$outDir"
+     
+    WinMergeU_Dir $dir1 $dir2 $list -outDir $outDir -Line 3 -Mode_S
+}
 # ==================================================================================================
