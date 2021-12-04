@@ -21,12 +21,11 @@ function compareGitCommit {
     # 輸出 WinMerge 比較清單
     if ($PSScriptRoot) { $curDir = $PSScriptRoot } else { $curDir = (Get-Location).Path }
     $list = getCommitDiff $CM1 $CM2 -gitDir $gitDir
-    
-    if (!$outDir) {
-        if (!$projectName) { $outDir = "$curDir\compare_source" } 
-        else { if ($projectName) { $outDir = "$curDir\$projectName" } }
-    } elseif ($projectName) { $outDir = "$outDir\$projectName" }
-    
+
+    if ($projectName) {
+        if (!$outDir) { $outDir = $curDir }
+        $outDir = "$outDir\$projectName"
+    } elseif (!$outDir) { $outDir = "$curDir\compare_source" }
     
     # if ($projectName) { $outDir = "$outDir\$projectName" }
     # 書出檔案
@@ -61,4 +60,8 @@ $gitDir      = "Z:\gitRepo\doc_develop"
 $outDir      = "Z:\work"
 
 # compareGitCommit $CM1 $CM2 $gitDir -outDir $outDir
+
 compareGitCommit $CM1 $CM2 $gitDir -outDir $outDir
+compareGitCommit $CM1 $CM2 $gitDir -outDir $outDir -projectName "doc_1130"
+compareGitCommit $CM1 $CM2 $gitDir 
+compareGitCommit $CM1 $CM2 $gitDir                 -projectName "doc_1130"
