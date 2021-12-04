@@ -104,8 +104,8 @@ function Test_compareDir {
     
     $diffDir = "Z:\Work\doc_diff"
     
-    $dir1    = "source_after"
-    $dir2    = "source_before"
+    $dir1    = "source_before"
+    $dir2    = "source_after"
     $list    = "diff-list.txt"
     $outDir  = "source_cmp"
      

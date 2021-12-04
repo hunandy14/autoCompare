@@ -40,10 +40,10 @@ function compareGitCommit {
     # ===================================================
     $srcDir  = $outDir
 
-    $dir1    = "source_after"
-    $dir2    = "source_before"
+    $dir1    = "source_before"
+    $dir2    = "source_after"
     $list    = $listFileName
-    $repDir  = "source_cmp"
+    $repDir  = "COMPARE_REPORT"
 
     $dir1    = "$srcDir\$dir1"
     $dir2    = "$srcDir\$dir2"
@@ -55,8 +55,8 @@ function compareGitCommit {
 # ==================================================================================================
 # 使用範例
 function test_compareGit {
-    $CM1         = "master"
-    $CM2         = "INIT"
+    $Left        = "INIT"
+    $Right       = "master"
     $gitDir      = "Z:\gitRepo\doc_develop"
     $outDir      = "Z:\work"
     
@@ -65,7 +65,7 @@ function test_compareGit {
     # compareGitCommit $CM1 $CM2 $gitDir                 -projectName "doc_1130"
     # compareGitCommit $CM1 $CM2 $gitDir 
     
-    compareGitCommit $CM1 $CM2 $gitDir -outDir $outDir -projectName "doc_1130" -Line 5 -CompactPATH
+    compareGitCommit $Left $Right $gitDir -outDir $outDir -projectName "doc_1130" -Line 5 -CompactPATH
 }
 # test_compareGit
 # ==================================================================================================
