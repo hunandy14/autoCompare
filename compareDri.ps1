@@ -72,18 +72,16 @@ function WinMergeU_Dir {
     $idx = 1
     $collection = (Get-Content $listFileName)
     foreach ($item in $collection) {
+        $item = $item.Replace("/", "\")
         # 獲取兩個資料夾原始檔
         $F1 = $dir1 + "\" + $item
         $F2 = $dir2 + "\" + $item
         # 簡化路徑輸出檔案路徑
         if ($Mode_S) {
-            $MainDir = $item.Substring(0, $item.IndexOf("/"))
-            $idxOf = $item.LastIndexOf("/") + 1
+            $MainDir = $item.Substring(0, $item.IndexOf("\"))
+            $idxOf = $item.LastIndexOf("\") + 1
             $FileName = "$MainDir\" + $item.Substring($idxOf, $item.Length - $idxOf )
-        }
-        else {
-            $FileName = $item.Replace("/", "\")
-        }
+        } else { $FileName = $item }
         # 輸出比對檔案
         $outName = "$outDir\$FileName" + ".html"
         WinMergeU_Core $F1 $F2 $outName -Line $Line
@@ -93,7 +91,7 @@ function WinMergeU_Dir {
         $link = HTML_Tag "a" $FileName -href $outName
         $div = HTML_Tag "div" "`n    $number`n    $link`n" -style "height: 22px"
         $Content = $Content + "$div`n"
-        $idx = $idx+1
+        $idx = $idx + 1
     }
     $index = "$outDir\index.html"
     [System.IO.File]::WriteAllLines($index, (HTML_Head $Content))
@@ -101,16 +99,18 @@ function WinMergeU_Dir {
 }
 # ==================================================================================================
 if ($PSScriptRoot) { $curDir = $PSScriptRoot } else { $curDir = (Get-Location).Path }
-$diffDir  = "Z:\autoCompare\doc_develop_update"
-$CM1      = "INIT"
-$CM2      = "master"
-$diffList = "diff-list.txt"
-$outDir   = "Z:\autoCompare\doc_develop_diff"
 
-$dir1   = "$diffDir\$CM1"
-$dir2   = "$diffDir\$CM2"
-$list   = "$diffDir\$diffList"
-$outDir = "$outDir"
+$diffDir = "Z:\Work\doc_diff"
 
-WinMergeU_Dir $dir1 $dir2 $list -outDir $outDir -Line 3
+$dir1    = "source_after"
+$dir2    = "source_before"
+$list    = "diff-list.txt"
+$outDir  = "source_cmp"
+ 
+$dir1    = "$diffDir\$dir1"
+$dir2    = "$diffDir\$dir2"
+$list    = "$diffDir\$list"
+$outDir  = "$diffDir\$outDir"
+ 
+WinMergeU_Dir $dir1 $dir2 $list -outDir $outDir -Line 3 -Mode_S
 # ==================================================================================================
