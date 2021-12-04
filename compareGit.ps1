@@ -1,44 +1,3 @@
-function getCommitFile {
-    param (
-        [Parameter(Position = 0)]
-        [string] $CM1,
-        [Parameter(Position = 1)]
-        [string] $CM2,
-        [Parameter(Position = 2)]
-        [string] $gitDir,
-        [Parameter(ParameterSetName = "")]
-        [string] $outDir,
-        [Parameter(ParameterSetName = "")]
-        [string] $ListFileName,
-        [switch] $Expand
-    )
-    if ($outDir -eq "") { $outDir = "$PSScriptRoot\CommitFiles" }
-    if ($ListFileName -eq "") { $ListFileName = "diff-list.txt" }
-    # 獲取差異清單
-    Set-location $gitDir
-    $F1 = "$outDir\$CM1.zip".Replace("\", "/")
-    New-Item -ItemType File -Path $F1 -Force | Out-Null
-    $F2 = "$outDir\$CM2.zip".Replace("\", "/")
-    New-Item -ItemType File -Path $F2 -Force | Out-Null
-    # 打包差異的檔案
-    $diff_list = "`$(git diff --name-only $CM1 $CM2)"
-    $cmd = "git archive -o $F1 $CM1 $diff_list"
-    Invoke-Expression $cmd
-    $cmd = "git archive -o $F2 $CM2 $diff_list"
-    Invoke-Expression $cmd
-    # 建立差異清單檔案
-    $FileContent = $(git diff --name-only $CM1 $CM2)
-    Set-location $outDir
-    $FileContent | Out-File -Encoding ASCII $ListFileName
-    # 解壓縮並刪除檔案
-    if ($Expand) {
-        Expand-Archive $F1 -Force; Remove-Item $F1
-        Expand-Archive $F2 -Force; Remove-Item $F2
-    }
-    # 恢復工作目錄
-    Set-location $PSScriptRoot
-    return @("$outDir\$CM1", "$outDir\$CM2", "$outDir\$ListFileName")
-}
 # ==================================================================================================
 function archiveCommit {
     param (
@@ -71,6 +30,21 @@ function archiveCommit {
     }
     Set-location "$curDir\"
 }
+function getCommitDiff {
+    param (
+        [Parameter(Position = 0)]
+        [string] $CM1,
+        [Parameter(Position = 1)]
+        [string] $CM2,
+        [Parameter(Position = 2, ParameterSetName = "")]
+        [string] $gitDir
+    )
+    if ($PSScriptRoot) { $curDir = $PSScriptRoot } else { $curDir = (Get-Location).Path }
+    Set-location "$gitDir\"
+    $diff_list = git diff --name-only $CM1 $CM2
+    Set-location "$curDir\"
+    return $diff_list
+}
 function archiveCommitDiff {
     param (
         [Parameter(Position = 0)]
@@ -83,16 +57,24 @@ function archiveCommitDiff {
         [string] $outDir,
         [switch] $Expand
     )
-    "A $CM1"
-    "B $CM2"
-    "C $gitDir"
+    # 獲取差異清單
+    $diff_list = getCommitDiff $CM1 $CM2 $gitDir
+    archiveCommit $CM1 $diff_list $gitDir -outDir $outDir -Expand:$Expand
 }
 # ==================================================================================================
 $gitDir = "Z:\gitRepo\doc_develop"
 $List = @("css/DMWD1013.css", "css/DMWZ01.css")
+$CM1 = "master"
+$CM2 = "INIT"
+$outDir = "Z:\Test"
+
 # 依據特定清單獲取提交點檔案
-archiveCommit "INIT" $List $gitDir -outDir "Z:\Test" -Expand
-archiveCommit "master" $List $gitDir -outDir "Z:\Test" -Expand
+# archiveCommit $CM2 $List $gitDir -outDir $outDir -Expand
+# archiveCommit $CM1 $List $gitDir -outDir $outDir -Expand
+# 獲取兩個差一點間的檔案修改
+# archiveCommitDiff $CM1 $CM2 $gitDir -outDir $outDir -Expand
+
+
 
 
 # ==================================================================================================
