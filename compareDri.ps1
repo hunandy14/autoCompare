@@ -61,7 +61,7 @@ function WinMergeU_Dir {
         [string] $outDir,
         [Parameter(ParameterSetName = "")]
         [Int16] $Line = 3,
-        [switch] $Mode_S
+        [switch] $CompactPATH
     )
     if ($outDir -eq "") {
         if ($PSScriptRoot) { $curDir = $PSScriptRoot } else { $curDir = (Get-Location).Path }
@@ -77,7 +77,7 @@ function WinMergeU_Dir {
         $F1 = $dir1 + "\" + $item
         $F2 = $dir2 + "\" + $item
         # 簡化路徑輸出檔案路徑
-        if ($Mode_S) {
+        if ($CompactPATH) {
             $MainDir = $item.Substring(0, $item.IndexOf("\"))
             $idxOf = $item.LastIndexOf("\") + 1
             $FileName = "$MainDir\" + $item.Substring($idxOf, $item.Length - $idxOf )
@@ -113,6 +113,6 @@ function Test_compareDir {
     $list    = "$diffDir\$list"
     $outDir  = "$diffDir\$outDir"
      
-    WinMergeU_Dir $dir1 $dir2 $list -outDir $outDir -Line 3 -Mode_S
+    WinMergeU_Dir $dir1 $dir2 $list -outDir $outDir -Line 3 -CompactPATH
 }
 # ==================================================================================================

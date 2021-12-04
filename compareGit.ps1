@@ -45,7 +45,7 @@ function compareGitCommit {
     $dir2    = "$srcDir\$dir2"
     $list    = "$srcDir\$list"
     $outDir2 = "$srcDir\$repDir"
-    WinMergeU_Dir $dir1 $dir2 $list -outDir $outDir2 -Line 3 -Mode_S
+    WinMergeU_Dir $dir1 $dir2 $list -outDir $outDir2 -Line 3 -CompactPATH
 }
 # ==================================================================================================
 # 使用範例
