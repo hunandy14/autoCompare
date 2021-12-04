@@ -39,13 +39,15 @@ function WinMergeU_Core {
         [Parameter(Position = 2, ParameterSetName = "")]
         [string] $Output,
         [Parameter(ParameterSetName = "")]
-        [Int16] $Line = 3
+        [Int16] $Line
     )
     if ($Output -eq "") {
         if ($PSScriptRoot) { $curDir = $PSScriptRoot } else { $curDir = (Get-Location).Path }
         $Output = "$curDir\FileDiff-OUT.html"
         Write-Host "    File Outout to: [ $Output ]"
     }
+    if (!$Line) { $Line = 3 }
+    "Line[$Line]"
     New-Item -ItemType File -Path $Output -Force | Out-Null
     WinMergeU $F1 $F2 -cfg Settings/ShowIdentical=0 -cfg Settings/DiffContextV2=$Line -minimize -noninteractive -u -or $Output
 }
@@ -60,7 +62,7 @@ function WinMergeU_Dir {
         [Parameter(Position = 3, ParameterSetName = "")]
         [string] $outDir,
         [Parameter(ParameterSetName = "")]
-        [Int16] $Line = 3,
+        [Int16] $Line,
         [switch] $CompactPATH
     )
     if ($outDir -eq "") {
@@ -84,7 +86,7 @@ function WinMergeU_Dir {
         } else { $FileName = $item }
         # 輸出比對檔案
         $outName = "$outDir\$FileName" + ".html"
-        WinMergeU_Core $F1 $F2 $outName -Line $Line
+        WinMergeU_Core $F1 $F2 $outName -Line:$Line
         
         # HTML項目
         $number = HTML_Tag "span" $idx -style "width: 30px;display: inline-block"

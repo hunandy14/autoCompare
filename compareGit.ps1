@@ -2,22 +2,26 @@
 function compareGitCommit {
     param (
         [Parameter(Position = 0)]
-        $CM1,
+        [string] $CM1,
         [Parameter(Position = 1)]
-        $CM2,
+        [string] $CM2,
         [Parameter(Position = 2)]
-        $gitDir,
+        [string] $gitDir,
         [Parameter(ParameterSetName = "")]
-        $outDir,
+        [string] $outDir,
         [Parameter(ParameterSetName = "")]
-        $projectName
+        [string] $projectName,
+        [Parameter(ParameterSetName = "")]
+        [Int16] $Line,
+        [switch] $CompactPATH
+        
     )
     # ===================================================
     # 載入函式
-    # Import-module .\archiveGit.ps1
-    # Import-module .\compareDri.ps1
-    irm "https://raw.githubusercontent.com/hunandy14/autoCompare/master/archiveGit.ps1" | iex
-    irm "https://raw.githubusercontent.com/hunandy14/autoCompare/master/compareDri.ps1" | iex
+    Import-module .\archiveGit.ps1
+    Import-module .\compareDri.ps1
+    # irm "https://raw.githubusercontent.com/hunandy14/autoCompare/master/archiveGit.ps1" | iex
+    # irm "https://raw.githubusercontent.com/hunandy14/autoCompare/master/compareDri.ps1" | iex
     # ===================================================
     # 初始化設定
     $listFileName = "diff-list.txt"
@@ -29,10 +33,10 @@ function compareGitCommit {
     } elseif (!$outDir) { $outDir = "$curDir\compare_source" }
     # ===================================================
     # 從git提交點中獲取檔案
-    $list = getCommitDiff $CM1 $CM2 -gitDir $gitDir
-    archiveCommit $CM1 $List $gitDir -outFile "source_before.zip" -outDir $outDir -Expand
-    archiveCommit $CM2 $List $gitDir -outFile "source_after.zip"  -outDir $outDir -Expand
-    [System.IO.File]::WriteAllLines("$outDir\$listFileName", $list);
+    # $list = getCommitDiff $CM1 $CM2 -gitDir $gitDir
+    # archiveCommit $CM1 $List $gitDir -outFile "source_before.zip" -outDir $outDir -Expand
+    # archiveCommit $CM2 $List $gitDir -outFile "source_after.zip"  -outDir $outDir -Expand
+    # [System.IO.File]::WriteAllLines("$outDir\$listFileName", $list);
     # ===================================================
     $srcDir  = $outDir
 
@@ -45,7 +49,8 @@ function compareGitCommit {
     $dir2    = "$srcDir\$dir2"
     $list    = "$srcDir\$list"
     $outDir2 = "$srcDir\$repDir"
-    WinMergeU_Dir $dir1 $dir2 $list -outDir $outDir2 -Line 3 -CompactPATH
+    
+    WinMergeU_Dir $dir1 $dir2 $list -outDir $outDir2 -Line:$Line -CompactPATH:$CompactPATH
 }
 # ==================================================================================================
 # 使用範例
@@ -55,10 +60,12 @@ function test_compareGit {
     $gitDir      = "Z:\gitRepo\doc_develop"
     $outDir      = "Z:\work"
     
-    compareGitCommit $CM1 $CM2 $gitDir -outDir $outDir -projectName "doc_1130"
+    # compareGitCommit $CM1 $CM2 $gitDir -outDir $outDir -projectName "doc_1130"
     # compareGitCommit $CM1 $CM2 $gitDir -outDir $outDir
     # compareGitCommit $CM1 $CM2 $gitDir                 -projectName "doc_1130"
     # compareGitCommit $CM1 $CM2 $gitDir 
+    
+    compareGitCommit $CM1 $CM2 $gitDir -outDir $outDir -projectName "doc_1130"
 }
 
 test_compareGit
