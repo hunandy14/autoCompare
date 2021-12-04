@@ -65,7 +65,7 @@ function test_compareGit {
     # compareGitCommit $CM1 $CM2 $gitDir                 -projectName "doc_1130"
     # compareGitCommit $CM1 $CM2 $gitDir 
     
-    compareGitCommit $CM1 $CM2 $gitDir -outDir $outDir -projectName "doc_1130" -CompactPATH
+    compareGitCommit $CM1 $CM2 $gitDir -outDir $outDir -projectName "doc_1130" -Line 5 -CompactPATH
 }
-test_compareGit
+# test_compareGit
 # ==================================================================================================
