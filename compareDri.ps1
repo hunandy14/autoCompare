@@ -62,6 +62,8 @@ function WinMergeU_Dir {
         [string] $outDir,
         [Parameter(ParameterSetName = "")]
         [string] $Line,
+        [Parameter(ParameterSetName = "")]
+        [string] $ServAddr,
         [switch] $CompactPATH
     )
     if ($outDir -eq "") {
@@ -88,8 +90,10 @@ function WinMergeU_Dir {
         WinMergeU_Core $F1 $F2 $outName -Line:$Line
         
         # HTML項目
+        $Addr = $outName
+        if ($ServAddr) { $Addr = "$ServAddr\$FileName" + ".html" }
         $number = HTML_Tag "span" $idx -style "width: 30px;display: inline-block"
-        $link = HTML_Tag "a" $FileName -href $outName
+        $link = HTML_Tag "a" $FileName -href $Addr
         $div = HTML_Tag "div" "`n    $number`n    $link`n" -style "height: 22px"
         $Content = $Content + "$div`n"
         $idx = $idx + 1
@@ -100,21 +104,20 @@ function WinMergeU_Dir {
 }
 # ==================================================================================================
 function Test_compareDir {
-    if ($PSScriptRoot) { $curDir = $PSScriptRoot } else { $curDir = (Get-Location).Path }
-    
-    $diffDir = "Z:\Work\doc_diff"
-    
+    $ServAddr= "Z:\Server"
+    $srcDir  = "Z:\Work\doc_1130"
+
     $dir1    = "source_before"
     $dir2    = "source_after"
     $list    = "diff-list.txt"
-    $outDir  = "source_cmp"
-     
-    $dir1    = "$diffDir\$dir1"
-    $dir2    = "$diffDir\$dir2"
-    $list    = "$diffDir\$list"
-    $outDir  = "$diffDir\$outDir"
-     
-    WinMergeU_Dir $dir1 $dir2 $list -outDir $outDir -Line 5 -CompactPATH
+    $repDir  = "COMPARE_REPORT"
+
+    $dir1    = "$srcDir\$dir1"
+    $dir2    = "$srcDir\$dir2"
+    $list    = "$srcDir\$list"
+    $outDir2 = "$srcDir\$repDir"
+    
+    WinMergeU_Dir $dir1 $dir2 $list -o $outDir2 -Line 2 -S:$ServAddr -Com
 }
 # Test_compareDir
 # ==================================================================================================
