@@ -19,7 +19,7 @@ function archiveCommit {
     if ($ListFileName -eq "") { $ListFileName = "diff-list.txt" }
     if ($outFile -eq "") { $outFile = "$CM1.zip" }
     # 打包差異的檔案
-    Set-location "$gitDir\"
+    if ($gitDir -ne "") { Set-location "$gitDir\" }
     $F1 = "$outDir\$outFile".Replace("\", "/")
     New-Item -ItemType File -Path $F1 -Force | Out-Null
     Invoke-Expression "git archive -o $F1 $CM1 $List"
@@ -28,7 +28,7 @@ function archiveCommit {
         Set-location "$outDir\"
         Expand-Archive $F1 -Force; Remove-Item $F1
     }
-    Set-location "$curDir\"
+    if ($gitDir -ne "") { Set-location "$curDir\" }
 }
 function getCommitDiff {
     param (
@@ -40,9 +40,10 @@ function getCommitDiff {
         [string] $gitDir
     )
     if ($PSScriptRoot) { $curDir = $PSScriptRoot } else { $curDir = (Get-Location).Path }
-    Set-location "$gitDir\"
+    if ($CM2 -eq "") { $CM2 = "$CM1^1" }
+    if ($gitDir -ne "") { Set-location "$gitDir\" }
     $diff_list = git diff --name-only $CM1 $CM2
-    Set-location "$curDir\"
+    if ($gitDir -ne "") { Set-location "$curDir\" }
     return $diff_list
 }
 function archiveCommitDiff {
@@ -62,20 +63,27 @@ function archiveCommitDiff {
     archiveCommit $CM1 $diff_list $gitDir -outDir $outDir -Expand:$Expand
 }
 # ==================================================================================================
-$gitDir = "Z:\gitRepo\doc_develop"
-$List = @("css/DMWD1013.css", "css/DMWZ01.css")
-$CM1 = "master"
-$CM2 = "INIT"
-$outDir = "Z:\Test"
-
 # 依據特定清單獲取提交點檔案
+# $List = @("css/DMWD1013.css", "css/DMWZ01.css")
 # archiveCommit $CM2 $List $gitDir -outDir $outDir -Expand
 # archiveCommit $CM1 $List $gitDir -outDir $outDir -Expand
 # 獲取兩個差一點間的檔案修改
 # archiveCommitDiff $CM1 $CM2 $gitDir -outDir $outDir -Expand
-
-
-
-
 # ==================================================================================================
+$projectName = "doc_diff"
+$listFileName = "diff-list.txt"
 
+$gitDir = "Z:\gitRepo\doc_develop"
+$CM1 = "master"
+$CM2 = "INIT"
+$outDir = "Z:\work"
+
+# 輸出 WinMerge 比較清單
+$list = getCommitDiff $CM1 $CM2 -gitDir $gitDir
+$listFileName = "$outDir\$projectName\$listFileName"
+$outDir = "$outDir\$projectName"
+$Expand = $true
+archiveCommit $CM1 $List $gitDir -outFile "source_before.zip" -outDir $outDir -Expand:$Expand
+archiveCommit $CM2 $List $gitDir -outFile "source_after.zip"  -outDir $outDir -Expand:$Expand
+[System.IO.File]::WriteAllLines($listFileName, $list);
+# ==================================================================================================
