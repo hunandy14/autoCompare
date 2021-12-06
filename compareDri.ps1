@@ -32,9 +32,9 @@ function HTML_Tag {
 # ==========================================================
 function WinMergeU_Core {
     param (
-        [Parameter(Position = 0)]
+        [Parameter(Position = 0, Mandatory=$true)]
         [string] $F1,
-        [Parameter(Position = 1)]
+        [Parameter(Position = 1, Mandatory=$true)]
         [string] $F2,
         [Parameter(Position = 2, ParameterSetName = "")]
         [string] $Output,
