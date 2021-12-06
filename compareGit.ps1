@@ -1,4 +1,10 @@
 # ==================================================================================================
+# 載入函式
+# Import-module .\archiveGit.ps1
+# Import-module .\compareDri.ps1
+irm "https://raw.githubusercontent.com/hunandy14/autoCompare/master/archiveGit.ps1" | iex
+irm "https://raw.githubusercontent.com/hunandy14/autoCompare/master/compareDri.ps1" | iex
+# ==================================================================================================
 function compareGitCommit {
     param (
         [Parameter(Position = 0)]
@@ -18,13 +24,6 @@ function compareGitCommit {
         [switch] $CompactPATH
         
     )
-    # ===================================================
-    # 載入函式
-    # Import-module .\archiveGit.ps1
-    # Import-module .\compareDri.ps1
-    irm "https://raw.githubusercontent.com/hunandy14/autoCompare/master/archiveGit.ps1" | iex
-    irm "https://raw.githubusercontent.com/hunandy14/autoCompare/master/compareDri.ps1" | iex
-    # ===================================================
     # 初始化設定
     $listFileName = "diff-list.txt"
     # 決定 outDir 子資料夾增加與否的邏輯
