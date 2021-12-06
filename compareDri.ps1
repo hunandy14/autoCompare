@@ -39,7 +39,8 @@ function WinMergeU_Core {
         [Parameter(Position = 2, ParameterSetName = "")]
         [string] $Output,
         [Parameter(ParameterSetName = "")]
-        [string] $Line
+        [string] $Line,
+        [switch] $OpenHTML
     )
     if (!$Line) { $Line = 3 }
     if ($Output -eq "") {
@@ -49,6 +50,7 @@ function WinMergeU_Core {
     }
     New-Item -ItemType File -Path $Output -Force | Out-Null
     WinMergeU $F1 $F2 -cfg Settings/ShowIdentical=0 -cfg Settings/DiffContextV2=$Line -minimize -noninteractive -u -or $Output
+    if ($OpenHTML) { Invoke-Expression $Output }
 }
 function WinMergeU_Dir {
     param (
