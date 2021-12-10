@@ -77,18 +77,19 @@ function WinMergeU_Dir {
         Write-Host "]" 
     }
     $Content = ""
-    $idx = 1
+    $idx     = 1
+    $shift   = 0
     # 獲取項目清單
     if ($List) {
         if ( $List -is [array] ) { $collection = $List } 
         else { $collection = (Get-Content $List) }
     } else {
         $collection = (Get-ChildItem $dir1 -Recurse -File).FullName
-        $regexp = $dir1 -replace("\\", "\\")
-        $collection = $collection -replace ("$regexp\\","")
+        $shift = (Resolve-Path $dir1).Path.Length
     }
     # 開始比對
     foreach ($item in $collection) {
+        $item = $item.Substring($shift+1, $item.Length-$shift-1)
         $item = $item.Replace("/", "\")
         # 獲取兩個資料夾原始檔
         $F1 = $dir1 + "\" + $item
