@@ -54,35 +54,47 @@ function WinMergeU_Core {
 }
 function WinMergeU_Dir {
     param (
-        [Parameter(Position = 0)]
+        [Parameter(Position = 0, Mandatory=$true)]
         [string] $dir1,
-        [Parameter(Position = 1)]
+        [Parameter(Position = 1, Mandatory=$true)]
         [string] $dir2,
-        [Parameter(Position = 2)]
-        [System.Object] $listFileName,
+        [Parameter(Position = 2, ParameterSetName = "")]
+        [System.Object] $List,
         [Parameter(Position = 3, ParameterSetName = "")]
         [string] $outDir,
         [Parameter(ParameterSetName = "")]
         [string] $Line,
         [Parameter(ParameterSetName = "")]
         [string] $ServAddr,
-        [switch] $CompactPATH
+        [switch] $CompactPATH,
+        [switch] $NotOpenIndex
     )
     if ($outDir -eq "") {
         if ($PSScriptRoot) { $curDir = $PSScriptRoot } else { $curDir = (Get-Location).Path }
-        $outDir = "$curDir\FileDiff-OUT"
-        Write-Host "    File Outout to: [ $outDir ]"
+        $outDir = "$curDir\COMPARE_REPORT"
+        Write-Host "    File Outout to: [" -NoNewline
+        Write-Host $outDir -ForegroundColor yellow -NoNewline
+        Write-Host "]" 
     }
     $Content = ""
     $idx = 1
-    $collection = (Get-Content $listFileName)
+    # 獲取項目清單
+    if ($List) {
+        if ( $List -is [array] ) { $collection = $List } 
+        else { $collection = (Get-Content $List) }
+    } else {
+        $collection = (Get-ChildItem $dir1 -Recurse -File).FullName
+        $regexp = $dir1 -replace("\\", "\\")
+        $collection = $collection -replace ("$regexp\\","")
+    }
+    # 開始比對
     foreach ($item in $collection) {
         $item = $item.Replace("/", "\")
         # 獲取兩個資料夾原始檔
         $F1 = $dir1 + "\" + $item
         $F2 = $dir2 + "\" + $item
         # 簡化路徑輸出檔案路徑
-        if ($CompactPATH) {
+        if ($CompactPATH -and ((Select-String -Input $item -Patt "\\" -A).Matches.Count -gt 1)) {
             $MainDir = $item.Substring(0, $item.IndexOf("\"))
             $idxOf = $item.LastIndexOf("\") + 1
             $FileName = "$MainDir\" + $item.Substring($idxOf, $item.Length - $idxOf )
@@ -102,24 +114,25 @@ function WinMergeU_Dir {
     }
     $index = "$outDir\index.html"
     [System.IO.File]::WriteAllLines($index, (HTML_Head $Content))
-    Invoke-Expression $index
+    if (!$NotOpenIndex) { Invoke-Expression "& '$index'" } 
 }
 # ==================================================================================================
 function Test_compareDir {
-    $ServAddr= "Z:\Server"
+    # $ServAddr= "Z:\Server"
     $srcDir  = "Z:\Work\doc_1130"
-
+    
     $dir1    = "source_before"
     $dir2    = "source_after"
-    $list    = "diff-list.txt"
-    $repDir  = "COMPARE_REPORT"
-
+    # $repDir  = "COMPARE_REPORT"
+    
     $dir1    = "$srcDir\$dir1"
     $dir2    = "$srcDir\$dir2"
-    $list    = "$srcDir\$list"
-    $outDir2 = "$srcDir\$repDir"
+    # $list    = @("src1.js", "src2.js")
+    # $list    = "$srcDir\diff-list.txt"
+    # $outDir = "$srcDir\$repDir"
     
-    WinMergeU_Dir $dir1 $dir2 $list -o $outDir2 -Line 2 -S:$ServAddr -Com
+    # WinMergeU_Dir $dir1 $dir2 -List:$list -o:$outDir -Line 2 -S:$ServAddr -Com
+    WinMergeU_Dir $dir1 $dir2 -Line 3 -CompactPATH -NotOpenIndex
 }
 # Test_compareDir
 # ==================================================================================================
