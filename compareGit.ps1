@@ -69,7 +69,7 @@ function test_compareGit {
     # compareGitCommit $CM1 $CM2 $gitDir                 -projectName "doc_1130"
     # compareGitCommit $CM1 $CM2 $gitDir 
     
-    compareGitCommit $Left $Right $gitDir -o $outDir -p:projectName -Line:2 -Comp
+    compareGitCommit $Left $Right $gitDir -o $outDir -p:$projectName -Line:2 -Comp
     # compareGitCommit $Left $Right $gitDir -o $outDir -p:projectName -Line:2 -S:$ServAddr -Comp
 }
 # test_compareGit
