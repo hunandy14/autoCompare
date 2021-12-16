@@ -67,6 +67,8 @@ function WinMergeU_Dir {
         [switch] $CompactPATH,
         [switch] $NotOpenIndex
     )
+    $dir1 = (Resolve-Path $dir1).Path
+    $dir2 = (Resolve-Path $dir2).Path
     if ($PSScriptRoot) { $curDir = $PSScriptRoot } else { $curDir = (Get-Location).Path }
     if (!$outDir) {
         $outDir = "$curDir\COMPARE_REPORT"
