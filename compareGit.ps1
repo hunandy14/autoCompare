@@ -19,8 +19,6 @@ function compareGitCommit {
         [string] $projectName,
         [Parameter(ParameterSetName = "")]
         [string] $Line,
-        [Parameter(ParameterSetName = "")]
-        [string] $ServAddr,
         [switch] $CompactPATH
         
     )
@@ -51,12 +49,11 @@ function compareGitCommit {
     $list    = "$srcDir\$list"
     $outDir2 = "$srcDir\$repDir"
     
-    WinMergeU_Dir $dir1 $dir2 $list -o $outDir2 -Line:$Line -Serv:$ServAddr -Comp:$CompactPATH
+    WinMergeU_Dir $dir1 $dir2 $list -o $outDir2 -Line:$Line -Comp:$CompactPATH
 }
 # ==================================================================================================
 # 使用範例
 function test_compareGit {
-    $ServAddr    = "Z:\Server"
     $projectName = "doc_1130"
     
     $Left        = "INIT"
@@ -70,7 +67,6 @@ function test_compareGit {
     # compareGitCommit $CM1 $CM2 $gitDir 
     
     compareGitCommit $Left $Right $gitDir -o $outDir -p:$projectName -Line:2 -Comp
-    # compareGitCommit $Left $Right $gitDir -o $outDir -p:projectName -Line:2 -S:$ServAddr -Comp
 }
 # test_compareGit
 # ==================================================================================================

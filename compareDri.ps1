@@ -64,13 +64,11 @@ function WinMergeU_Dir {
         [string] $outDir,
         [Parameter(ParameterSetName = "")]
         [string] $Line,
-        [Parameter(ParameterSetName = "")]
-        [string] $ServAddr,
         [switch] $CompactPATH,
         [switch] $NotOpenIndex
     )
-    if ($outDir -eq "") {
-        if ($PSScriptRoot) { $curDir = $PSScriptRoot } else { $curDir = (Get-Location).Path }
+    if ($PSScriptRoot) { $curDir = $PSScriptRoot } else { $curDir = (Get-Location).Path }
+    if (!$outDir) {
         $outDir = "$curDir\COMPARE_REPORT"
         Write-Host "    File Outout to: [" -NoNewline
         Write-Host $outDir -ForegroundColor yellow -NoNewline
@@ -78,19 +76,20 @@ function WinMergeU_Dir {
     }
     $Content = ""
     $idx     = 1
-    $shift   = 0
     # 獲取項目清單
     if ($List) {
-        if ( $List -is [array] ) { $collection = $List } 
-        else { $collection = (Get-Content $List) }
+        if ( $List -is [array] ) { $collection = $List } # 直接取陣列當清單
+        else { $collection = (Get-Content $List) }       # 取清單文件內容
+        $collection = $collection -replace ("/", "\")
     } else {
-        $collection = (Get-ChildItem $dir1 -Recurse -File).FullName
-        $shift = (Resolve-Path $dir1).Path.Length
+        $tmpDir = Get-Location
+        Set-Location $dir1
+        $collection = ((Get-ChildItem $dir1 -Recurse -File).FullName)  | Resolve-Path -Relative
+        $collection = $collection -replace ("^\.\\", "")
+        Set-Location $tmpDir
     }
     # 開始比對
     foreach ($item in $collection) {
-        $item = $item.Substring($shift+1, $item.Length-$shift-1)
-        $item = $item.Replace("/", "\")
         # 獲取兩個資料夾原始檔
         $F1 = $dir1 + "\" + $item
         $F2 = $dir2 + "\" + $item
@@ -102,24 +101,22 @@ function WinMergeU_Dir {
         } else { $FileName = $item }
         # 輸出比對檔案
         $outName = "$outDir\$FileName" + ".html"
+        $address = "$FileName" + ".html"
         WinMergeU_Core $F1 $F2 $outName -Line:$Line
-        
         # HTML項目
-        $Addr = $outName
-        if ($ServAddr) { $Addr = "$ServAddr\$FileName" + ".html" }
         $number = HTML_Tag "span" $idx -style "width: 30px;display: inline-block"
-        $link = HTML_Tag "a" $FileName -href $Addr
+        $link = HTML_Tag "a" $FileName -href $address
         $div = HTML_Tag "div" "`n    $number`n    $link`n" -style "height: 22px"
         $Content = $Content + "$div`n"
         $idx = $idx + 1
     }
-    $index = "$outDir\index.html"
+    
+    $index = (Resolve-Path $outDir).Path + "\index.html"
     [System.IO.File]::WriteAllLines($index, (HTML_Head $Content))
     if (!$NotOpenIndex) { Invoke-Expression "& '$index'" } 
 }
 # ==================================================================================================
 function Test_compareDir {
-    # $ServAddr= "Z:\Server"
     $srcDir  = "Z:\Work\doc_1130"
     
     $dir1    = "source_before"
@@ -128,12 +125,17 @@ function Test_compareDir {
     
     $dir1    = "$srcDir\$dir1"
     $dir2    = "$srcDir\$dir2"
-    # $list    = @("src1.js", "src2.js")
+    # $list    = @("css/DMWD1013.css", "css/DMWZ01.css")
     # $list    = "$srcDir\diff-list.txt"
     # $outDir = "$srcDir\$repDir"
     
-    # WinMergeU_Dir $dir1 $dir2 -List:$list -o:$outDir -Line 2 -S:$ServAddr -Com
-    WinMergeU_Dir $dir1 $dir2 -Line 3 -CompactPATH -NotOpenIndex
+    # WinMergeU_Dir $dir1 $dir2 -List:$list -o:$outDir -Line:2 -Com
+    # WinMergeU_Dir $dir1 $dir2 -Line 3 -CompactPATH -NotOpenIndex
+    
+    # WinMergeU_Dir $dir1 $dir2 -Line:1 -outDir:"MMMMM"
+    # WinMergeU_Dir $dir1 $dir2 -Line:1 -outDir:"MMMMM" -List:@("css/DMWD1013.css", "css/DMWZ01.css")
+    # WinMergeU_Dir $dir1 $dir2 -Line:1                 -List:@("css/DMWD1013.css", "css/DMWZ01.css")
+    WinMergeU_Dir $dir1 $dir2 -Line:3
 }
 # Test_compareDir
 # ==================================================================================================
