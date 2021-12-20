@@ -30,6 +30,7 @@ function compareGitCommit {
         if (!$outDir) { $outDir = $curDir }
         $outDir = "$outDir\$projectName"
     } elseif (!$outDir) { $outDir = "$curDir\compare_source" }
+    if (!$gitDir) {$gitDir = $curDir}
     # ===================================================
     # 從git提交點中獲取檔案
     $list = getCommitDiff $CM1 $CM2 -gitDir $gitDir
