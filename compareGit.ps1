@@ -31,12 +31,19 @@ function compareGitCommit {
         $outDir = "$outDir\$projectName"
     } elseif (!$outDir) { $outDir = "$curDir\compare_source" }
     if (!$gitDir) {$gitDir = $curDir}
+    Set-Location $gitDir
     # ===================================================
     # 從git提交點中獲取檔案
-    $list = getCommitDiff $CM1 $CM2 -gitDir $gitDir
-    archiveCommit $CM1 $List $gitDir -outFile "source_before.zip" -outDir $outDir -Expand
+    $List = getCommitDiff $CM1 $CM2 -gitDir $gitDir
+    $List_Cm1 = $(git ls-tree --name-only -r $CM1)|Where-Object { $a=$_; $List|ForEach-Object{$_ -contains $a} }
+    archiveCommit $CM1 $List_Cm1 $gitDir -outFile "source_before.zip" -outDir $outDir -Expand
     archiveCommit $CM2 $List $gitDir -outFile "source_after.zip"  -outDir $outDir -Expand
-    [System.IO.File]::WriteAllLines("$outDir\$listFileName", $list);
+    [IO.File]::WriteAllLines("$outDir\$listFileName", $List)
+    # 左清單缺少的檔案補上空檔
+    $List|ForEach-Object{
+        $F="$outDir\source_before\$_"
+        if (!(Test-Path $F -PathType:Leaf)) { New-Item $F -Force|Out-Null }
+    }
     # ===================================================
     $srcDir  = $outDir
 
@@ -51,23 +58,20 @@ function compareGitCommit {
     $outDir2 = "$srcDir\$repDir"
     
     WinMergeU_Dir $dir1 $dir2 $list -o $outDir2 -Line:$Line -Comp:$CompactPATH
+    Set-Location $curDir
 }
 # ==================================================================================================
 # 使用範例
 function test_compareGit {
-    $projectName = "doc_1130"
+    # irm "https://raw.githubusercontent.com/hunandy14/autoCompare/master/compareGit.ps1" | iex
+
+    $ProjectName = "YAG0"
     
     $Left        = "INIT"
-    $Right       = "master"
-    $gitDir      = "Z:\gitRepo\doc_develop"
-    $outDir      = "Z:\work"
+    $Right       = "dev"
+    $gitDir      = "W:\MyDocument\マイドキュメント\gitRepo\YAG0\app"
+    $outDir      = "W:\compare"
     
-    # compareGitCommit $CM1 $CM2 $gitDir -outDir $outDir -projectName "doc_1130"
-    # compareGitCommit $CM1 $CM2 $gitDir -outDir $outDir
-    # compareGitCommit $CM1 $CM2 $gitDir                 -projectName "doc_1130"
-    # compareGitCommit $CM1 $CM2 $gitDir 
-    
-    compareGitCommit $Left $Right $gitDir -o $outDir -p:$projectName -Line:2 -Comp
-}
-# test_compareGit
+    compareGitCommit $Left $Right $gitDir -o $outDir -P:$ProjectName -Line:9999 -Comp
+} # test_compareGit
 # ==================================================================================================
