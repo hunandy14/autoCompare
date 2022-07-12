@@ -22,6 +22,9 @@ function compareGitCommit {
         [switch] $CompactPATH
         
     )
+    # 檢查路徑
+    if (!(Test-Path $gitDir -PathType:Container)) { Write-Host "Error:: [ $gitDir ] not exist." }
+    
     # 初始化設定
     $listFileName = "diff-list.txt"
     # 決定 outDir 子資料夾增加與否的邏輯
