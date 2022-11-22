@@ -115,8 +115,7 @@ Start-Process WinMergeU $ArgumentList
 - https://www.c-sharpcorner.com/article/poor-man-web-monitoring-tools/
 - https://manual.winmerge.org/en/Command_line.html
 - https://github.com/WinMerge/winmerge
-
-
+- https://github.com/WinMerge/winmerge/releases/download/v2.16.24/winmerge-2.16.24-x64-exe.zip
 
 
 
