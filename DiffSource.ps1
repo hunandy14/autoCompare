@@ -34,7 +34,7 @@ function Install-WinMerge {
     
     # 驗證安裝
     if (!(Get-Command $CmdName -CommandType:Application -EA:0)) { Write-Host "WinMerge 安裝失敗" -ForegroundColor:Yellow; Exit }
-} Install-WinMerge -Force
+} # Install-WinMerge -Force
 
 
 
@@ -51,6 +51,9 @@ function DiffSource {
         [Int64 ] $Line = -1,
         [Parameter(ParameterSetName = "")]
         [String] $Filter,
+        [String] $Argument,
+        [Switch] $IgnoreSameFile,
+        [Switch] $IgnoreWhite,
         [Switch] $NoOpenHTML,
         [Switch] $CompareZipSecondLayer
     )
@@ -84,14 +87,21 @@ $ArgumentList = @"
     -cfg Settings/DirViewExpandSubdirs=1
     -cfg ReportFiles/ReportType=2
     -cfg ReportFiles/IncludeFileCmpReport=1
+    -cfg Settings/ViewLineNumbers=1
     -f !.git\;!.vs\;$Filter
     -r
     -u
     -or "$Output"
-"@ -split("`r`n|`n") -replace("^ +") -join(" ")
+    $Argument
+"@ -split("`r`n|`n")
+    # 追加參數
+    if ($IgnoreSameFile){ $ArgumentList += "-cfg Settings/ShowIdentical=0" }
+    if ($IgnoreWhite){ $ArgumentList += "-ignorews"; $ArgumentList += "-ignoreblanklines"; $ArgumentList += "-ignoreeol" }
+    $ArgumentList = $ArgumentList -replace("^ +") -join(" ")
     # 開始比較
     Start-Process WinMergeU $ArgumentList -Wait
     if (!$NoOpenHTML) { explorer.exe $Output }
     return "ReportPath: $Output"
 } # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html'
+# DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -NoOpenHTML -IgnoreSameFile -IgnoreWhite
 # DiffSource 'Z:\Work\INIT.zip' 'Z:\Work\master.zip' -Output 'Z:\Work\Diff\index.html' -CompareZipSecondLayer

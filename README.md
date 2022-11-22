@@ -59,6 +59,15 @@ irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -Output $OutPath -NoO
 
 # 比較壓縮檔中第二層資料夾(資料夾名必須與壓縮檔名一致)
 irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -CompareZipSecondLayer
+
+# 檔案過濾與排除
+irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -Filter "*.txt;!.gitignore"
+
+# 忽略相同檔案輸出到檔案總攬
+irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -IgnoreSameFile
+
+# 忽略白色 (右端空白, 跳行, 結尾符號)
+irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -IgnoreWhite
 ```
 
 
@@ -104,6 +113,7 @@ Start-Process WinMergeU $ArgumentList
 |5|-cfg Settings/DirViewExpandSubdirs=1|包含所有子資料夾檔案|
 |6|-cfg ReportFiles/ReportType=2|精簡的HTML格式(單檔比較時可省略)|
 |7|-cfg ReportFiles/IncludeFileCmpReport=1|包含檔案清單總攬|
+|7|-cfg Settings/ViewLineNumbers=1|顯示行號|
 |8|-f|忽略指定檔案|
 |8|-r|包含子文件的比較|
 |9|-u |不要將本次比較清單加入最近使用清單|
@@ -114,7 +124,7 @@ Start-Process WinMergeU $ArgumentList
 ### 其他常用參數說明
 ||參數|說明|
 |-|-|-|
-|1|-ignorews|忽略空白字元差異|
+|1|-ignorews|忽略右邊空白字元差異|
 |2|-ignoreblanklines|忽略空白行差異|
 |3|-ignoreeol|忽略換行 LF/CRLF 差異|
 |4|-cfg Settings/ShowIdentical=0|忽略相同檔案不輸出報告|
