@@ -49,10 +49,28 @@ function DiffSource {
         [String] $Output = "$env:TEMP\DiffSource\index.html",
         [Parameter(ParameterSetName = "")]
         [Int64 ] $Line = -1,
-        [Switch] $NoOpenHTML
+        [Switch] $NoOpenHTML,
+        [Switch] $CompareZipSecondLayer
     )
     # 安裝WinMerge (已安裝會自動退出)
     Install-WinMerge
+    
+    # 比較壓縮檔中第二層資料夾(資料夾名必須與壓縮檔名一致)
+    if ($CompareZipSecondLayer) {
+        # LeftPath
+        $File = Get-Item $LeftPath
+        if($File.Extension -eq '.zip'){
+            $ExpandPath = $env:TEMP+"\"+$File.BaseName
+            Expand-Archive $File.FullName $ExpandPath -Force
+        } $LeftPath = $ExpandPath+"\"+$File.BaseName
+        # RightPath
+        $File = Get-Item $RightPath
+        if($File.Extension -eq '.zip'){
+            $ExpandPath = $env:TEMP+"\"+$File.BaseName
+            Expand-Archive $File.FullName $ExpandPath -Force
+        } $RightPath = $ExpandPath+"\"+$File.BaseName
+    }
+    
     # 參數設定
 $ArgumentList = @"
     "$LeftPath"
@@ -73,3 +91,4 @@ $ArgumentList = @"
     if (!$NoOpenHTML) { explorer.exe $Output }
     return "ReportPath: $Output"
 } # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -NoOpenHTML
+# DiffSource 'Z:\Work\INIT.zip' 'Z:\Work\master.zip' -Output 'Z:\Work\Diff\index.html' -CompareZipSecondLayer
