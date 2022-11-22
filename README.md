@@ -37,22 +37,19 @@ WinMergeU_Dir "source_before" "source_after" -Line:1
 
 ### 自動比對資料夾2
 ```ps1
-# 載入函式
-irm "https://raw.githubusercontent.com/hunandy14/autoCompare/master/DiffSource.ps1"|iex
-
 # 設定
-$LeftPath  = "source_before"
-$RightPath = "source_after"
-$OutPath   = "$env:TEMP\DiffSource\index.html"
+$LeftPath  = "Z:\Work\INIT"
+$RightPath = "Z:\Work\master"
+$OutPath   = "Z:\Work\Diff\index.html"
 
 # 比較並自動打開報告 (輸出到暫存資料夾)
-DiffSource $LeftPath $RightPath
+irm bit.ly/3UXp1Mp|iex; DiffSource $LeftPath $RightPath
 
 # 比較並輸出到特定資料夾
-DiffSource $LeftPath $RightPath -OutPath $OutPath
+irm bit.ly/3UXp1Mp|iex; DiffSource $LeftPath $RightPath -Output $OutPath
 
 # 比較並輸出到特定資料夾但不打開網頁
-DiffSource $LeftPath $RightPath -Output $OutPath -NoOpenHTML
+irm bit.ly/3UXp1Mp|iex; DiffSource $LeftPath $RightPath -Output $OutPath -NoOpenHTML
 ```
 
 

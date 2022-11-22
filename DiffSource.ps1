@@ -28,5 +28,5 @@ $ArgumentList = @"
     # 開始比較
     Start-Process WinMergeU $ArgumentList -Wait
     if (!$NoOpenHTML) { explorer.exe $Output }
-    Write-Output "Report Path: $Output"
-} # DiffSource 'doc_develop_update\INIT' 'doc_develop_update\master'
+    return "ReportPath: $Output"
+} # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -NoOpenHTML
