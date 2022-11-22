@@ -36,6 +36,12 @@ WinMergeU_Dir "source_before" "source_after" -Line:1
 <br>
 
 ### 自動比對資料夾2
+快速使用
+```ps1
+irm bit.ly/DiffSource|iex; DiffSource 
+```
+
+詳細說明
 ```ps1
 # 設定
 $LeftPath  = "Z:\Work\INIT"
