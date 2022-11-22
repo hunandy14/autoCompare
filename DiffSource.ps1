@@ -8,9 +8,9 @@ function Install-WinMerge {
     
     # 獲取設置
     $Url = "https://github.com/WinMerge/winmerge/releases/download/v2.16.24/winmerge-2.16.24-x64-exe.zip"
-    # $Url -match "[^/]+(?!.*/)" |Out-Null
-    # $ZipName = $Matches[0]
-    $DLPath = $env:TEMP+"\"+$Matches[0]
+    $Url -match "[^/]+(?!.*/)" |Out-Null
+    $ZipName = $Matches[0]
+    $DLPath = $env:TEMP+"\$ZipName"
     $AppPath = $env:TEMP+"\WinMerge"
     $AppExec = $AppPath+"\WinMergeU.exe"
     $CmdName = 'WinMergeU'

@@ -43,13 +43,13 @@ $RightPath = "Z:\Work\master"
 $OutPath   = "Z:\Work\Diff\index.html"
 
 # 比較並自動打開報告 (輸出到暫存資料夾)
-irm bit.ly/3UXp1Mp|iex; DiffSource $LeftPath $RightPath
+irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath
 
 # 比較並輸出到特定資料夾
-irm bit.ly/3UXp1Mp|iex; DiffSource $LeftPath $RightPath -Output $OutPath
+irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -Output $OutPath
 
 # 比較並輸出到特定資料夾但不打開網頁
-irm bit.ly/3UXp1Mp|iex; DiffSource $LeftPath $RightPath -Output $OutPath -NoOpenHTML
+irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -Output $OutPath -NoOpenHTML
 ```
 
 
