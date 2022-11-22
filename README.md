@@ -1,11 +1,10 @@
 ## 使用範例
 
 ### 自動比對 GIT 提交點
-```
-irm "https://raw.githubusercontent.com/hunandy14/autoCompare/master/compareGit.ps1" | iex
+```ps1
+irm "https://raw.githubusercontent.com/hunandy14/autoCompare/master/compareGit.ps1"|iex
 
 $projectName = "doc_1130"
-
 $Left        = "INIT"
 $Right       = "master"
 $gitDir      = "Z:\gitRepo\doc_develop"
@@ -18,8 +17,8 @@ compareGitCommit $Left $Right $gitDir -o $outDir -p:projectName -Line:2 -Comp
 <br>
 
 ### 自動比對資料夾
-```
-irm "https://raw.githubusercontent.com/hunandy14/autoCompare/master/compareDri.ps1" | iex
+```ps1
+irm "https://raw.githubusercontent.com/hunandy14/autoCompare/master/compareDri.ps1"|iex
 
 $srcDir  = "Z:\Work\doc_1130"
 $dir1    = "$srcDir\source_before"
@@ -29,10 +28,34 @@ WinMergeU_Dir $dir1 $dir2 -Line 3 -CompactPATH -NotOpenIndex
 
 ```
 
-```
-irm "https://raw.githubusercontent.com/hunandy14/autoCompare/master/compareDri.ps1" | iex
+```ps1
+irm "https://raw.githubusercontent.com/hunandy14/autoCompare/master/compareDri.ps1"|iex
 WinMergeU_Dir "source_before" "source_after" -Line:1
 ```
+
+<br>
+
+### 自動比對資料夾2
+```ps1
+# 載入函式
+irm "https://raw.githubusercontent.com/hunandy14/autoCompare/master/DiffSource.ps1"|iex
+
+# 設定
+$LeftPath  = "source_before"
+$RightPath = "source_after"
+$OutPath   = "$env:TEMP\DiffSource\index.html"
+
+# 比較並自動打開報告 (輸出到暫存資料夾)
+DiffSource $LeftPath $RightPath
+
+# 比較並輸出到特定資料夾
+DiffSource $LeftPath $RightPath -OutPath $OutPath
+
+# 比較並輸出到特定資料夾但不打開網頁
+DiffSource $LeftPath $RightPath -Output $OutPath -NoOpenHTML
+```
+
+
 
 <br><br><br>
 
