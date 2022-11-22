@@ -83,6 +83,7 @@ $ArgumentList = (@"
     -cfg Settings/DirViewExpandSubdirs=1
     -cfg ReportFiles/ReportType=2
     -cfg ReportFiles/IncludeFileCmpReport=1
+    -f !.git\;!.vs\
     -r
     -u
     -or "$Output"
@@ -103,6 +104,7 @@ Start-Process WinMergeU $ArgumentList
 |5|-cfg Settings/DirViewExpandSubdirs=1|包含所有子資料夾檔案|
 |6|-cfg ReportFiles/ReportType=2|精簡的HTML格式(單檔比較時可省略)|
 |7|-cfg ReportFiles/IncludeFileCmpReport=1|包含檔案清單總攬|
+|8|-f|忽略指定檔案|
 |8|-r|包含子文件的比較|
 |9|-u |不要將本次比較清單加入最近使用清單|
 |10|-or|生成報告的輸出路徑(.HTML)|
@@ -125,6 +127,7 @@ Start-Process WinMergeU $ArgumentList
 - https://manual.winmerge.org/en/Command_line.html
 - https://github.com/WinMerge/winmerge
 - https://github.com/WinMerge/winmerge/releases/download/v2.16.24/winmerge-2.16.24-x64-exe.zip
+- https://manual.winmerge.org/en/Filters.html
 
 
 

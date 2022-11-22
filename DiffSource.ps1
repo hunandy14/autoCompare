@@ -49,6 +49,8 @@ function DiffSource {
         [String] $Output = "$env:TEMP\DiffSource\index.html",
         [Parameter(ParameterSetName = "")]
         [Int64 ] $Line = -1,
+        [Parameter(ParameterSetName = "")]
+        [String] $Filter,
         [Switch] $NoOpenHTML,
         [Switch] $CompareZipSecondLayer
     )
@@ -82,6 +84,7 @@ $ArgumentList = @"
     -cfg Settings/DirViewExpandSubdirs=1
     -cfg ReportFiles/ReportType=2
     -cfg ReportFiles/IncludeFileCmpReport=1
+    -f !.git\;!.vs\;$Filter
     -r
     -u
     -or "$Output"
@@ -90,5 +93,5 @@ $ArgumentList = @"
     Start-Process WinMergeU $ArgumentList -Wait
     if (!$NoOpenHTML) { explorer.exe $Output }
     return "ReportPath: $Output"
-} # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -NoOpenHTML
+} # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html'
 # DiffSource 'Z:\Work\INIT.zip' 'Z:\Work\master.zip' -Output 'Z:\Work\Diff\index.html' -CompareZipSecondLayer
