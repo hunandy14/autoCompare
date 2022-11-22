@@ -4,6 +4,7 @@ function Install-WinMerge {
         [switch] $Force
     )
     # 檢測命令是否已經存在
+    $CmdName = "WinMergeU"
     if ((!$Force) -and (Get-Command $CmdName -CommandType:Application -EA:0)) { return }
     
     # 獲取設置
@@ -13,8 +14,7 @@ function Install-WinMerge {
     $DLPath = $env:TEMP+"\$ZipName"
     $AppPath = $env:TEMP+"\WinMerge"
     $AppExec = $AppPath+"\WinMergeU.exe"
-    $CmdName = 'WinMergeU'
-  
+    
     # 檢測下載資料夾是否存在
     if (Get-Command $AppExec -CommandType:Application -EA:0) {
         if (($env:Path).IndexOf($AppPath) -eq -1) {
@@ -34,7 +34,7 @@ function Install-WinMerge {
     
     # 驗證安裝
     if (!(Get-Command $CmdName -CommandType:Application -EA:0)) { Write-Host "WinMerge 安裝失敗" -ForegroundColor:Yellow; Exit }
-} # Install-WinMerge -Force
+} Install-WinMerge -Force
 
 
 
