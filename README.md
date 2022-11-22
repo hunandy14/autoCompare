@@ -35,7 +35,7 @@ WinMergeU_Dir "source_before" "source_after" -Line:1
 
 <br>
 
-### 自動比對資料夾2
+### 自動比對 (資料夾, 單檔, 壓縮檔)
 快速使用
 ```ps1
 irm bit.ly/DiffSource|iex; DiffSource 
@@ -56,6 +56,9 @@ irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -Output $OutPath
 
 # 比較並輸出到特定資料夾但不打開網頁
 irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -Output $OutPath -NoOpenHTML
+
+# 比較壓縮檔中第二層資料夾(資料夾名必須與壓縮檔名一致)
+irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -CompareZipSecondLayer
 ```
 
 
