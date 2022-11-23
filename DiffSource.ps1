@@ -90,7 +90,7 @@ function DiffSource {
     
     # 處理Incule參數，獲取FileName
     if ($Include) {
-        $Filter += $Include -replace ".*?(\\|/)" -join ";"
+        $Filter = "$Filter;" + ($Include -replace ".*?(\\|/)" -join ";")
     }
     # 參數設定
 $ArgumentList = @"
@@ -104,7 +104,7 @@ $ArgumentList = @"
     -cfg ReportFiles/ReportType=2
     -cfg ReportFiles/IncludeFileCmpReport=1
     -cfg Settings/ViewLineNumbers=1
-    -f !.git\;!.vs\;$Filter
+    -f "!.git\;!.vs\;$Filter"
     -r
     -u
     -or "$Output"
@@ -116,6 +116,7 @@ $ArgumentList = @"
     if ($IgnoreWhite){ $ArgumentList += "-ignorews"; $ArgumentList += "-ignoreblanklines"; $ArgumentList += "-ignoreeol" }
     $ArgumentList = $ArgumentList -replace("^ +") -join(" ")
     # 開始比較
+    Write-Output "WinMergeU $ArgumentList"
     Start-Process WinMergeU $ArgumentList -Wait
     if (!$NoOpenHTML) { explorer.exe $Output }
     return "ReportPath: $Output"
@@ -129,4 +130,4 @@ $ArgumentList = @"
 # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Filter "js\"
 # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Filter "!js\;!xsl\"
 # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Include @("js/aaa/DMWA0010.js")
-# DiffSource 'Z:\DiffSource\before' 'Z:\DiffSource\after' -Output 'Z:\DiffSource\Report\index.html' -Include (Get-Content "Z:\DiffSource\list.txt")
+# DiffSource 'Z:\DiffSource\before' 'Z:\DiffSource\after' -Output 'Z:\DiffSource\Report\index.html' -Include (Get-Content "Z:\DiffSource\list.txt") -Filter "!xml\"
