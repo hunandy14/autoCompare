@@ -17,9 +17,10 @@ $RightPath = "after"
 $OutPath   = "Report\index.html"
 $List      = "list.txt"
 $Filter    = ""
+$IgSame    = $true
 
 # 比較
-DiffSource $LeftPath $RightPath -Output $OutPath -Include (Get-Content $List) -Filter $Filter
+DiffSource $LeftPath $RightPath -Output $OutPath -Include (Get-Content $List) -Filter $Filter -IgnoreSameFile:$IgSame
 
 
 
