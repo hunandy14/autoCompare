@@ -16,9 +16,10 @@ $LeftPath  = "before"
 $RightPath = "after"
 $OutPath   = "Report\index.html"
 $List      = "list.txt"
+$Filter    = ""
 
 # 比較
-DiffSource $LeftPath $RightPath -Output $OutPath -Include (Get-Content $List)
+DiffSource $LeftPath $RightPath -Output $OutPath -Include (Get-Content $List) -Filter $Filter
 
 
 
