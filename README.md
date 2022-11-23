@@ -50,25 +50,33 @@ $OutPath   = "Z:\Work\Diff\index.html"
 
 # 比較並自動打開報告 (輸出到暫存資料夾)
 irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath
-
 # 比較並輸出到特定資料夾
 irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -Output $OutPath
-
 # 比較並輸出到特定資料夾但不打開網頁
 irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -Output $OutPath -NoOpenHTML
+
+# 忽略相同檔案輸出到檔案總攬
+irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -IgnoreSameFile
+# 忽略白色 (右端空白, 跳行, 結尾符號)
+irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -IgnoreWhite
 
 # 比較壓縮檔中第二層資料夾(資料夾名必須與壓縮檔名一致)
 irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -CompareZipSecondLayer
 
-# 檔案過濾與排除
-irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -Filter "*.txt;!.gitignore"
+# 排除特定資料夾
+irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -Filter "!.git\;!.vs\"
+# 過濾特定檔名
+irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -Filter "*.css;*.js;"
 
-# 忽略相同檔案輸出到檔案總攬
-irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -IgnoreSameFile
-
-# 忽略白色 (右端空白, 跳行, 結尾符號)
-irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -IgnoreWhite
+# 檔案名稱過濾與排除: 物件清單(會刪除的資料夾路徑僅取結尾檔名輸入Filter)
+irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -Include @("css/DMWA1010.xsl", "css/DMWZ01.css")
+irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -Include (Get-Content "Z:\Work\diff-list.txt")
 ```
+
+> 原生參數的 Filter 似乎只是針對項目名稱進行的過濾, 沒有辦法使用相對路徑進行過濾
+> 1. 在參數結尾追加斜線可以把該資料夾當項目名稱過濾, 但是會導致過濾條件限縮到那個資料夾不會搜尋子資料夾
+> 2. 想要指定第二層以上某個資料夾，要疊加白名單才可以，但會導致比較結果包含第一層的檔案
+>     (反過來先搜出第一層全部的項目用黑名單全BAN掉，可以保持自動搜尋子資料夾功能)
 
 
 
@@ -138,6 +146,7 @@ Start-Process WinMergeU $ArgumentList
 - https://github.com/WinMerge/winmerge
 - https://github.com/WinMerge/winmerge/releases/download/v2.16.24/winmerge-2.16.24-x64-exe.zip
 - https://manual.winmerge.org/en/Filters.html
+- https://stackoverflow.com/questions/59682491/winmerge-filter-for-file-types-and-include-subfolders
 
 
 

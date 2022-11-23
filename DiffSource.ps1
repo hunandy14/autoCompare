@@ -51,6 +51,8 @@ function DiffSource {
         [Int64 ] $Line = -1,
         [Parameter(ParameterSetName = "")]
         [String] $Filter,
+        [Parameter(ParameterSetName = "")]
+        [Object] $Include,
         [String] $Argument,
         [Switch] $IgnoreSameFile,
         [Switch] $IgnoreWhite,
@@ -76,6 +78,10 @@ function DiffSource {
         } $RightPath = $ExpandPath+"\"+$File.BaseName
     }
     
+    # 處理Incule參數，獲取FileName
+    if ($Include) {
+        $Filter += $Include -replace ".*?(\\|/)" -join ";"
+    }
     # 參數設定
 $ArgumentList = @"
     "$LeftPath"
@@ -105,3 +111,11 @@ $ArgumentList = @"
 } # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html'
 # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -NoOpenHTML -IgnoreSameFile -IgnoreWhite
 # DiffSource 'Z:\Work\INIT.zip' 'Z:\Work\master.zip' -Output 'Z:\Work\Diff\index.html' -CompareZipSecondLayer
+# DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Filter ((Get-Content "Z:\Work\diff-list.txt") -replace ".*?(\\|/)" -join ";")
+# DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Include (Get-Content "Z:\Work\diff-list.txt")
+# DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Include @("DMWA1010.xsl", "css/DMWZ01.css")
+
+# DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' 
+# DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Filter "js\"
+# DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Filter "!js\;!xsl\"
+# DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Include @("js/aaa/DMWA0010.js")
