@@ -33,12 +33,14 @@ function Install-WinMerge {
     }
     
     # 驗證安裝
-    if (!(Get-Command $CmdName -CommandType:Application -EA:0)) { Write-Host "WinMerge 安裝失敗" -ForegroundColor:Yellow; Exit }
+    if (!(Get-Command $CmdName -CommandType:Application -EA:0)) { Write-Host "Error:: WinMerge installation failed." -ForegroundColor:Yellow; Exit }
 } # Install-WinMerge -Force
 
 
 
-# 比較程式碼碼差異
+# DiffSource 別名
+Set-Alias cmpSrc DiffSource
+# 比較程式碼差異
 function DiffSource {
     param (
         [Parameter(Position = 0, ParameterSetName = "", Mandatory)]
@@ -46,7 +48,7 @@ function DiffSource {
         [Parameter(Position = 1, ParameterSetName = "", Mandatory)]
         [String] $RightPath,
         [Parameter(ParameterSetName = "")]
-        [String] $Output = "$env:TEMP\DiffSource\index.html",
+        [String] $Output,
         [Parameter(ParameterSetName = "")]
         [Int64 ] $Line = -1,
         [Parameter(ParameterSetName = "")]
@@ -61,6 +63,14 @@ function DiffSource {
     )
     # 安裝WinMerge (已安裝會自動退出)
     Install-WinMerge
+    # 測試路徑
+    if ($LeftPath  -and !(Test-Path $LeftPath )) { Write-Host "Error:: LeftPath is not exist."  -ForegroundColor:Yellow ; return }
+    if ($RightPath -and !(Test-Path $RightPath)) { Write-Host "Error:: RightPath is not exist."  -ForegroundColor:Yellow; return }
+    if ($Output) {
+        [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
+        $Output = [System.IO.Path]::GetFullPath($Output)
+        if (!($Output -match ".html$")) { Write-Host "Error:: Output Path is not HTML file." -ForegroundColor:Yellow; return }
+    } else { $Output = "$env:TEMP\DiffSource\index.html" }
     
     # 比較壓縮檔中第二層資料夾(資料夾名必須與壓縮檔名一致)
     if ($CompareZipSecondLayer) {
@@ -100,6 +110,7 @@ $ArgumentList = @"
     -or "$Output"
     $Argument
 "@ -split("`r`n|`n")
+
     # 追加參數
     if ($IgnoreSameFile){ $ArgumentList += "-cfg Settings/ShowIdentical=0" }
     if ($IgnoreWhite){ $ArgumentList += "-ignorews"; $ArgumentList += "-ignoreblanklines"; $ArgumentList += "-ignoreeol" }
@@ -114,8 +125,8 @@ $ArgumentList = @"
 # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Filter ((Get-Content "Z:\Work\diff-list.txt") -replace ".*?(\\|/)" -join ";")
 # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Include (Get-Content "Z:\Work\diff-list.txt")
 # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Include @("DMWA1010.xsl", "css/DMWZ01.css")
-
 # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' 
 # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Filter "js\"
 # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Filter "!js\;!xsl\"
 # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Include @("js/aaa/DMWA0010.js")
+# DiffSource 'Z:\DiffSource\before' 'Z:\DiffSource\after' -Output 'Z:\DiffSource\Report\index.html' -Include (Get-Content "Z:\DiffSource\list.txt")
