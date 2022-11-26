@@ -18,17 +18,30 @@ function diffCommit {
     }
     # 命令
     if ($Filter) { $Filter = " --diff-filter=$Filter" }
-    $cmd = "git diff --name-status$Filter $Commit1 $Commit2".Trim()
+    $cmd1 = "git diff --name-status$Filter $Commit1 $Commit2".Trim()
+    $cmd2 = "git diff --numstat$Filter $Commit1 $Commit2".Trim()
     # 提取差分清單
     $curDir = (Get-Location).Path
     if ($Path) { Set-location $Path }
-    $content = Invoke-Expression $cmd
+    $content1 = Invoke-Expression $cmd1
+    $content2 = Invoke-Expression $cmd2
     if ($Path) { Set-location $curDir }
     # 轉換成 PSCustomObject
     $List = @()
-    $content|ForEach-Object{
-        $item = ($_ -split("\t"))
-        $List += [PSCustomObject]@{ Status = $item[0]; Name = $item[1]; }
+    # $content1|ForEach-Object{
+    #     $item = ($_ -split("\t"))
+    #     $List += [PSCustomObject]@{ Status = $item[0]; Name = $item[1]; }
+    # }
+    for ($i = 0; $i -lt $content1.Count; $i++) {
+        $item1 = ($content1[$i] -split("\t"))
+        $item2 = ($content2[$i] -split("\t"))
+        
+        $List += [PSCustomObject]@{
+            Status = $item1[0]
+            Name = $item1[1]
+            StepAdd = $item2[0]
+            StepDel = $item2[1]
+        }
     }
     return $List
 } # diffCommit INIT0 master -Path "Z:\doc"
@@ -89,6 +102,7 @@ function archiveCommit {
 } # archiveCommit "Z:\doc"
 # $list = (diffCommit INIT0 master -Path "Z:\doc")
 # archiveCommit -Path:"Z:\doc" -List:($list.Name) master 'acvFile\doc-master.zip'
+# archiveCommit -Path:"Z:\doc" -List:($list.Name) INIT0 'acvFile\doc-INIT0.zip'
 # archiveCommit
 # archiveCommit -Path:"Z:\doc"
 
