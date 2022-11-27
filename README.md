@@ -33,9 +33,30 @@ irm "https://raw.githubusercontent.com/hunandy14/autoCompare/master/compareDri.p
 WinMergeU_Dir "source_before" "source_after" -Line:1
 ```
 
-<br>
 
-### 自動比對 (資料夾, 單檔, 壓縮檔)
+
+
+
+
+<br><br><br><br><br><br>
+
+## 自動比對 GIT 提交點
+```ps1
+# 載入函式庫
+irm bit.ly/DiffSource|iex; irm 'raw.githubusercontent.com/hunandy14/autoCompare/master/ArchiveGitCommit.ps1'|iex
+
+# 比較節點
+acvDC INIT0 HEAD |cmpSrc
+```
+
+
+
+
+
+
+<br><br><br><br><br><br>
+
+## 自動比對 (資料夾, 單檔, 壓縮檔)
 快速使用
 ```ps1
 irm bit.ly/DiffSource|iex; DiffSource 
@@ -78,16 +99,11 @@ irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -Include (Get-Content
 > 2. 想要指定第二層以上某個資料夾，要疊加白名單才可以，但會導致比較結果包含第一層的檔案
 >     (反過來先搜出第一層全部的項目用黑名單全BAN掉，可以保持自動搜尋子資料夾功能)
 
-
-
-<br><br><br>
-
+<br>
 
 ### 獲取 Git 倉庫的差異清單
-快速使用
 ```ps1
 irm 'raw.githubusercontent.com/hunandy14/autoCompare/master/ArchiveGitCommit.ps1'|iex; diffCommit 
-
 
 # [HEAD -> 當前狀態] 的檔案比較 (不包含尚未提交的新增)
 irm 'raw.githubusercontent.com/hunandy14/autoCompare/master/ArchiveGitCommit.ps1'|iex; diffCommit 
@@ -116,7 +132,11 @@ irm 'raw.githubusercontent.com/hunandy14/autoCompare/master/ArchiveGitCommit.ps1
 ```
 
 
-<br><br><br>
+
+
+
+
+<br><br><br><br><br><br>
 
 ## WinMerge 比較報告輸出說明
 ### 範例代碼
