@@ -43,8 +43,8 @@ function diffCommit {
         $StepAdd = $item2[0]
         $StepDel = $item2[1]
         # 特殊狀況改名時
-        if ($Status -eq 'R085') {
-            $Status = 'R'
+        if ($Status -match '^R') {
+            # $Status = 'R'
             $Name   = $item1[2]
         }
         # 轉換物件
@@ -63,6 +63,7 @@ function diffCommit {
 # diffCommit
 # diffCommit -Path "Z:\doc" -Filter "D"
 # diffCommit INIT0 -Path "Z:\doc"
+# diffCommit HEAD^ HEAD -Path "Z:\doc"
 
 
 
@@ -184,3 +185,5 @@ function archiveDiffCommit {
 # 比較git節點
 # Invoke-RestMethod "raw.githubusercontent.com/hunandy14/autoCompare/master/DiffSource.ps1"|Invoke-Expression
 # acvDC INIT0 HEAD -Path:"Z:\doc"|cmpSrc
+# acvDC HEAD -Path:"Z:\doc" |cmpSrc
+# acvDC -Path:"Z:\doc" |cmpSrc
