@@ -123,11 +123,9 @@ function archiveCommit {
 # archiveCommit -Path:"Z:\doc" HEAD 'archive.zip'
 
 
-Invoke-RestMethod "raw.githubusercontent.com/hunandy14/autoCompare/master/DiffSource.ps1"|Invoke-Expression
-# DiffSource 別名
-Set-Alias cmpGitSrc DiffGitSource
-# 比較程式碼差異
-function DiffGitSource {
+
+# 封存 Git差異節點 間的變動檔案
+function archiveGitCommit {
     param (
         [Parameter(Position = 0, ParameterSetName = "", Mandatory)]
         [string] $Commit1,
@@ -159,24 +157,27 @@ function DiffGitSource {
     # $List2|Format-Table
     $Out2 = archiveCommit -Path:$Path -List:($List2.Name) $Commit1 $Env:TEMP
     # $Out2
-    DiffSource $Out1 $Out2
+    # DiffSource $Out1 $Out2
     # 輸出物件
-    # $Obj = @()
-    # $Obj += [PSCustomObject]@{
-    #     Commit      = $Commit1
-    #     ArchiveFile = $Out1
-    # }
-    # $Obj += [PSCustomObject]@{
-    #     Commit      = $Commit2
-    #     ArchiveFile = $Out2
-    # }
-    # return $Obj
+    $Obj = @()
+    $Obj += [PSCustomObject]@{
+        Commit   = $Commit1
+        FullName = $Out1
+    }
+    $Obj += [PSCustomObject]@{
+        Commit   = $Commit2
+        FullName = $Out2
+    }
+    return $Obj
 }
 # 輸出 [HEAD^ -> HEAD] 差異檔案
-# DiffGitSource HEAD0 -Path:"Z:\doc"
+# archiveGitCommit HEAD0 -Path:"Z:\doc"
 # 輸出 [INIT -> HEAD] 差異檔案
-# DiffGitSource INIT0 HEAD -Path:"Z:\doc"
+# archiveGitCommit INIT0 HEAD -Path:"Z:\doc"
 # 輸出 [INIT -> HEAD] 差異檔案並過濾特定檔案
-# DiffGitSource INIT0 HEAD -Path:"Z:\doc" -Include:@("*.css")
+# archiveGitCommit INIT0 HEAD -Path:"Z:\doc" -Include:@("*.css")
 # DiffSource "doc-INIT0.zip" "doc-HEAD.zip"
-# DiffGitSource INIT0 HEAD -Path:"Z:\doc"
+# archiveGitCommit INIT0 HEAD -Path:"Z:\doc"
+# 比較git節點
+# Invoke-RestMethod "raw.githubusercontent.com/hunandy14/autoCompare/master/DiffSource.ps1"|Invoke-Expression
+# archiveGitCommit INIT0 HEAD -Path:"Z:\doc" | DiffSource
