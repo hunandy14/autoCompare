@@ -43,9 +43,9 @@ Set-Alias cmpSrc DiffSource
 # 比較程式碼差異
 function DiffSource {
     param (
-        [Parameter(Position = 0, ParameterSetName = "", Mandatory)]
+        [Parameter(Position = 0, ParameterSetName = "A", Mandatory)]
         [String] $LeftPath,
-        [Parameter(Position = 1, ParameterSetName = "", Mandatory)]
+        [Parameter(Position = 1, ParameterSetName = "A", Mandatory)]
         [String] $RightPath,
         [Parameter(ParameterSetName = "")]
         [String] $Output,
@@ -59,8 +59,13 @@ function DiffSource {
         [Switch] $IgnoreSameFile,
         [Switch] $IgnoreWhite,
         [Switch] $NoOpenHTML,
-        [Switch] $CompareZipSecondLayer
+        [Switch] $CompareZipSecondLayer,
+        [Parameter(ValueFromPipeline, ParameterSetName = "B")]
+        [Object] $InputObject
     )
+    Begin { $ItemObject = @() } Process { if ($InputObject) { $ItemObject += $InputObject.FullName } } End {
+    # 輸入為 InputObject 時
+    if ($InputObject) { $LeftPath = $ItemObject[0]; $RightPath = $ItemObject[1]; }
     # 安裝WinMerge (已安裝會自動退出)
     Install-WinMerge
     # 測試路徑
@@ -120,7 +125,7 @@ $ArgumentList = @"
     Start-Process WinMergeU $ArgumentList -Wait
     if (!$NoOpenHTML) { explorer.exe $Output }
     return "ReportPath: $Output"
-} # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html'
+}} # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html'
 # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -NoOpenHTML -IgnoreSameFile -IgnoreWhite
 # DiffSource 'Z:\Work\INIT.zip' 'Z:\Work\master.zip' -Output 'Z:\Work\Diff\index.html' -CompareZipSecondLayer
 # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Filter ((Get-Content "Z:\Work\diff-list.txt") -replace ".*?(\\|/)" -join ";")
@@ -131,3 +136,4 @@ $ArgumentList = @"
 # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Filter "!js\;!xsl\"
 # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Include @("js/aaa/DMWA0010.js")
 # DiffSource 'Z:\DiffSource\before' 'Z:\DiffSource\after' -Output 'Z:\DiffSource\Report\index.html' -Include (Get-Content "Z:\DiffSource\list.txt") -Filter "!xml\"
+# (Get-ChildItem 'C:\Users\hunan\AppData\Local\Temp\archiveCommit' -Directory)|DiffSource
