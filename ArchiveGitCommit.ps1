@@ -79,23 +79,25 @@ function archiveCommit {
         [string] $Path,
         [switch] $Expand
     )
-    
     # 檢測路徑
+    [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
     $curDir = (Get-Location).Path
     if (!$Path) { $Path = $curDir } else {
-        [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
         $Path = [System.IO.Path]::GetFullPath($Path)
         if (!(Test-Path $Path)) {
             Write-Host "Error:: Path is not exist." -ForegroundColor:Yellow; return
         }
     }
-    # 設置路徑與命令
+    # 設置路徑與
     $gitDirName = (Split-Path $Path -Leaf)
     if (!$Commit) { $Commit = "HEAD" }
-    if (!$Destination) {
-        $Destination = "$gitDirName-$Commit.zip"
-    }
-    $Destination = [System.IO.Path]::GetFullPath($Destination)
+    $defDstName = "$gitDirName-$Commit.zip"
+    if ($Destination) { # 有路徑且為資料夾
+        if (!(Split-Path $Destination -Extension)) { $Destination = "$Destination\archiveCommit\$defDstName" }
+    } else { # 路徑為空
+        $Destination = $defDstName
+    } $Destination = [System.IO.Path]::GetFullPath($Destination)
+    # 設置命令
     $cmd = "git archive -o '$Destination' $Commit $List".Trim()
     # 打包差異的檔案
     if ($cmd) {
@@ -117,7 +119,8 @@ function archiveCommit {
 # archiveCommit -Path:"Z:\doc" -List:($list.Name) master 'acvFile\doc-master.zip'
 # archiveCommit -Path:"Z:\doc" -List:($list.Name) INIT0 'acvFile\doc-INIT0.zip'
 # archiveCommit
-# archiveCommit -Path:"Z:\doc"
+# archiveCommit -Path:"Z:\doc" HEAD $env:TEMP
+# archiveCommit -Path:"Z:\doc" HEAD 'archive.zip'
 
 
 Invoke-RestMethod "raw.githubusercontent.com/hunandy14/autoCompare/master/DiffSource.ps1"|Invoke-Expression
@@ -148,12 +151,14 @@ function DiffGitSource {
     $List1 = diffCommit $Commit1 $Commit2 -Path $Path
     $List1 = ($List1|Where-Object{$_.Status -notin "D"})
     # $List1|Format-Table
-    $Out1 = archiveCommit -Path:$Path -List:($List1.Name) $Commit2
+    $Out1 = archiveCommit -Path:$Path -List:($List1.Name) $Commit2 $Env:TEMP
+    # $Out1
     # 獲取 節點2 差異檔案
     $List2 = diffCommit $Commit2 $Commit1 -Path $Path
     $List2 = ($List2|Where-Object{$_.Status -notin "D"})
     # $List2|Format-Table
-    $Out2 = archiveCommit -Path:$Path -List:($List2.Name) $Commit1
+    $Out2 = archiveCommit -Path:$Path -List:($List2.Name) $Commit1 $Env:TEMP
+    # $Out2
     DiffSource $Out1 $Out2
     # 輸出物件
     # $Obj = @()
