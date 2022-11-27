@@ -128,7 +128,7 @@ Set-Alias acvDC archiveDiffCommit
 # 封存 Git差異節點 間的變動檔案
 function archiveDiffCommit {
     param (
-        [Parameter(Position = 0, ParameterSetName = "", Mandatory)]
+        [Parameter(Position = 0, ParameterSetName = "")]
         [string] $Commit1,
         [Parameter(Position = 1, ParameterSetName = "")]
         [string] $Commit2,
@@ -143,6 +143,7 @@ function archiveDiffCommit {
         $Path = [System.IO.Path]::GetFullPath($Path)
         if (!(Test-Path -PathType:Container "$Path\.git")) { Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction:Stop }
     }
+    if (!$Commit1) { $Commit1 = 'HEAD' }
     if (!$Commit2) { $Commit2 = "$Commit1"; $Commit1 = "$Commit1^" }
     # Write-Host $Commit1 -> $Commit2
     
