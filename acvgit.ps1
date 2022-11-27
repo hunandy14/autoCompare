@@ -23,8 +23,10 @@ function diffCommit {
     # 提取差分清單
     $curDir = (Get-Location).Path
     if ($Path) { Set-location $Path }
-    $content1 = Invoke-Expression $cmd1
-    $content2 = Invoke-Expression $cmd2
+    $content1 = @(Invoke-Expression $cmd1)
+    $content2 = @(Invoke-Expression $cmd2)
+    # Write-Host $cmd1 -ForegroundColor:Yellow
+    # Write-Host $cmd2 -ForegroundColor:Yellow
     if ($Path) { Set-location $curDir }
     # 轉換成 PSCustomObject
     $List = @()
@@ -35,7 +37,6 @@ function diffCommit {
     for ($i = 0; $i -lt $content1.Count; $i++) {
         $item1 = ($content1[$i] -split("\t"))
         $item2 = ($content2[$i] -split("\t"))
-        
         $List += [PSCustomObject]@{
             Status = $item1[0]
             Name = $item1[1]
