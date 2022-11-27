@@ -123,9 +123,10 @@ function archiveCommit {
 # archiveCommit -Path:"Z:\doc" HEAD 'archive.zip'
 
 
-
+# archiveDiffCommit 別名
+Set-Alias acvDC archiveDiffCommit
 # 封存 Git差異節點 間的變動檔案
-function archiveGitCommit {
+function archiveDiffCommit {
     param (
         [Parameter(Position = 0, ParameterSetName = "", Mandatory)]
         [string] $Commit1,
@@ -171,13 +172,13 @@ function archiveGitCommit {
     return $Obj
 }
 # 輸出 [HEAD^ -> HEAD] 差異檔案
-# archiveGitCommit HEAD0 -Path:"Z:\doc"
+# archiveDiffCommit HEAD0 -Path:"Z:\doc"
 # 輸出 [INIT -> HEAD] 差異檔案
-# archiveGitCommit INIT0 HEAD -Path:"Z:\doc"
+# archiveDiffCommit INIT0 HEAD -Path:"Z:\doc"
 # 輸出 [INIT -> HEAD] 差異檔案並過濾特定檔案
-# archiveGitCommit INIT0 HEAD -Path:"Z:\doc" -Include:@("*.css")
+# archiveDiffCommit INIT0 HEAD -Path:"Z:\doc" -Include:@("*.css")
 # DiffSource "doc-INIT0.zip" "doc-HEAD.zip"
-# archiveGitCommit INIT0 HEAD -Path:"Z:\doc"
+# archiveDiffCommit INIT0 HEAD -Path:"Z:\doc"
 # 比較git節點
 # Invoke-RestMethod "raw.githubusercontent.com/hunandy14/autoCompare/master/DiffSource.ps1"|Invoke-Expression
-# archiveGitCommit INIT0 HEAD -Path:"Z:\doc" | DiffSource
+# acvDC INIT0 HEAD -Path:"Z:\doc"|cmpSrc
