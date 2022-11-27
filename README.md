@@ -82,6 +82,42 @@ irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -Include (Get-Content
 
 <br><br><br>
 
+
+### 獲取 Git 倉庫的差異清單
+快速使用
+```ps1
+irm 'raw.githubusercontent.com/hunandy14/autoCompare/master/acvgit.ps1'|iex; diffCommit 
+
+
+# [HEAD -> 當前狀態] 的檔案比較 (不包含尚未提交的新增)
+irm 'raw.githubusercontent.com/hunandy14/autoCompare/master/acvgit.ps1'|iex; diffCommit 
+irm 'raw.githubusercontent.com/hunandy14/autoCompare/master/acvgit.ps1'|iex; diffCommit HEAD
+# [HEAD^ -> 當前狀態] 的檔案比較 (不包含尚未提交的新增)
+irm 'raw.githubusercontent.com/hunandy14/autoCompare/master/acvgit.ps1'|iex; diffCommit HEAD^
+# [HEAD^ -> HEAD] 的檔案比較 (全)
+irm 'raw.githubusercontent.com/hunandy14/autoCompare/master/acvgit.ps1'|iex; diffCommit HEAD^ HEAD
+
+# 指定git倉庫位置
+irm 'raw.githubusercontent.com/hunandy14/autoCompare/master/acvgit.ps1'|iex; diffCommit -Path "Z:\doc"
+# 過濾僅輸出變動的清單
+irm 'raw.githubusercontent.com/hunandy14/autoCompare/master/acvgit.ps1'|iex; diffCommit -Filter "M"
+```
+
+### 獲取 Git 提交點的差異清單
+```ps1
+# HEAD節點的檔案全
+irm 'raw.githubusercontent.com/hunandy14/autoCompare/master/acvgit.ps1'|iex; archiveCommit
+irm 'raw.githubusercontent.com/hunandy14/autoCompare/master/acvgit.ps1'|iex; archiveCommit HEAD
+# 指定git倉庫位置
+irm 'raw.githubusercontent.com/hunandy14/autoCompare/master/acvgit.ps1'|iex; archiveCommit -Path:"Z:\doc"
+# 過濾僅取出特定檔案
+irm 'raw.githubusercontent.com/hunandy14/autoCompare/master/acvgit.ps1'|iex; archiveCommit -List:@("A.txt", "B.txt")
+irm 'raw.githubusercontent.com/hunandy14/autoCompare/master/acvgit.ps1'|iex; archiveCommit -List:@("*.css")
+```
+
+
+<br><br><br>
+
 ## WinMerge 比較報告輸出說明
 ### 範例代碼
 ```ps1
