@@ -120,7 +120,7 @@ function archiveCommit {
 # archiveCommit -Path:"Z:\doc"
 
 
-
+Invoke-RestMethod "raw.githubusercontent.com/hunandy14/autoCompare/master/DiffSource.ps1"|Invoke-Expression
 # DiffSource 別名
 Set-Alias cmpGitSrc DiffGitSource
 # 比較程式碼差異
@@ -154,19 +154,18 @@ function DiffGitSource {
     $List2 = ($List2|Where-Object{$_.Status -notin "D"})
     # $List2|Format-Table
     $Out2 = archiveCommit -Path:$Path -List:($List2.Name) $Commit1
+    DiffSource $Out1 $Out2
     # 輸出物件
-    $Obj = @()
-    $Obj += [PSCustomObject]@{
-        Commit      = $Commit1
-        ArchiveFile = $Out1
-        # FileList    = $List1
-    }
-    $Obj += [PSCustomObject]@{
-        Commit      = $Commit2
-        ArchiveFile = $Out2
-        # FileList    = $List2
-    }
-    return $Obj
+    # $Obj = @()
+    # $Obj += [PSCustomObject]@{
+    #     Commit      = $Commit1
+    #     ArchiveFile = $Out1
+    # }
+    # $Obj += [PSCustomObject]@{
+    #     Commit      = $Commit2
+    #     ArchiveFile = $Out2
+    # }
+    # return $Obj
 }
 # 輸出 [HEAD^ -> HEAD] 差異檔案
 # DiffGitSource HEAD0 -Path:"Z:\doc"
