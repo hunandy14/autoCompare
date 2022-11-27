@@ -37,11 +37,22 @@ function diffCommit {
     for ($i = 0; $i -lt $content1.Count; $i++) {
         $item1 = ($content1[$i] -split("\t"))
         $item2 = ($content2[$i] -split("\t"))
+        # 取出字段
+        $Status = $item1[0]
+        $Name   = $item1[1]
+        $StepAdd = $item2[0]
+        $StepDel = $item2[1]
+        # 特殊狀況改名時
+        if ($Status -eq 'R085') {
+            $Status = 'R'
+            $Name   = $item1[2]
+        }
+        # 轉換物件
         $List += [PSCustomObject]@{
-            Status = $item1[0]
-            Name = $item1[1]
-            StepAdd = $item2[0]
-            StepDel = $item2[1]
+            Status  = $Status
+            Name    = $Name
+            StepAdd = $StepAdd
+            StepDel = $StepDel
         }
     }
     return $List
@@ -51,6 +62,7 @@ function diffCommit {
 # diffCommit -Path "Z:\doc"
 # diffCommit
 # diffCommit -Path "Z:\doc" -Filter "D"
+# diffCommit INIT0 -Path "Z:\doc"
 
 
 
