@@ -111,7 +111,7 @@ function archiveCommit {
         $ExpPath = "$(Split-Path $Destination)\$gitDirName"
         Expand-Archive $Destination $ExpPath -Force; Remove-Item
     }
-    Write-Output "Output:: $Destination"
+    return $Destination
 } # archiveCommit "Z:\doc"
 # $list = (diffCommit INIT0 master -Path "Z:\doc")
 # archiveCommit -Path:"Z:\doc" -List:($list.Name) master 'acvFile\doc-master.zip'
@@ -121,3 +121,58 @@ function archiveCommit {
 
 
 
+# DiffSource 別名
+Set-Alias cmpGitSrc DiffGitSource
+# 比較程式碼差異
+function DiffGitSource {
+    param (
+        [Parameter(Position = 0, ParameterSetName = "", Mandatory)]
+        [string] $Commit1,
+        [Parameter(Position = 1, ParameterSetName = "")]
+        [string] $Commit2,
+        [Parameter(ParameterSetName = "")]
+        [string] $Path,
+        [Parameter(ParameterSetName = "")]
+        [object] $Include
+    )
+    # 檢測路徑
+    if ($Path) {
+        [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
+        $Path = [System.IO.Path]::GetFullPath($Path)
+        if (!(Test-Path -PathType:Container "$Path\.git")) { Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction:Stop }
+    }
+    if (!$Commit2) { $Commit2 = "$Commit1"; $Commit1 = "$Commit1^" }
+    # Write-Host $Commit1 -> $Commit2
+    
+    # 獲取 節點1 差異檔案
+    $List1 = diffCommit $Commit1 $Commit2 -Path $Path
+    $List1 = ($List1|Where-Object{$_.Status -notin "D"})
+    # $List1|Format-Table
+    $Out1 = archiveCommit -Path:$Path -List:($List1.Name) $Commit2
+    # 獲取 節點2 差異檔案
+    $List2 = diffCommit $Commit2 $Commit1 -Path $Path
+    $List2 = ($List2|Where-Object{$_.Status -notin "D"})
+    # $List2|Format-Table
+    $Out2 = archiveCommit -Path:$Path -List:($List2.Name) $Commit1
+    # 輸出物件
+    $Obj = @()
+    $Obj += [PSCustomObject]@{
+        Commit      = $Commit1
+        ArchiveFile = $Out1
+        # FileList    = $List1
+    }
+    $Obj += [PSCustomObject]@{
+        Commit      = $Commit2
+        ArchiveFile = $Out2
+        # FileList    = $List2
+    }
+    return $Obj
+}
+# 輸出 [HEAD^ -> HEAD] 差異檔案
+# DiffGitSource HEAD0 -Path:"Z:\doc"
+# 輸出 [INIT -> HEAD] 差異檔案
+# DiffGitSource INIT0 HEAD -Path:"Z:\doc"
+# 輸出 [INIT -> HEAD] 差異檔案並過濾特定檔案
+# DiffGitSource INIT0 HEAD -Path:"Z:\doc" -Include:@("*.css")
+# DiffSource "doc-INIT0.zip" "doc-HEAD.zip"
+# DiffGitSource INIT0 HEAD -Path:"Z:\doc"
