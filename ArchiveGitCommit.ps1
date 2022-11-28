@@ -21,8 +21,7 @@ function diffCommit {
     $cmd1 = "git diff --name-status$Filter $Commit1 $Commit2".Trim()
     $cmd2 = "git diff --numstat$Filter $Commit1 $Commit2".Trim()
     # 提取差分清單
-    $curDir = (Get-Location).Path
-    if ($Path) { Set-location $Path }
+    if ($Path) { $curDir = (Get-Location).Path; Set-location $Path }
     $content1 = @(Invoke-Expression $cmd1)
     $content2 = @(Invoke-Expression $cmd2)
     # Write-Host $cmd1 -ForegroundColor:Yellow
@@ -56,72 +55,83 @@ function diffCommit {
         }
     }
     return $List
-} # diffCommit INIT0 master -Path "Z:\doc"
-# diffCommit INIT0 master -Path "Z:\doc"
-# diffCommit master -Path "Z:\doc"
-# diffCommit -Path "Z:\doc"
-# diffCommit
-# diffCommit -Path "Z:\doc" -Filter "D"
-# diffCommit INIT0 -Path "Z:\doc"
-# diffCommit HEAD^ HEAD -Path "Z:\doc"
+} # diffCommit INIT HEAD -Path "Z:\doc" -Filter "ADMR"
 
 
 
 # 從指定提交點取出特定清單檔案
 function archiveCommit {
     param (
-        [Parameter(Position = 0, ParameterSetName = "")]
+        [Parameter(Position = 0, ParameterSetName = "", Mandatory)]
         [string] $Commit,
         [Parameter(Position = 1, ParameterSetName = "")]
-        [string] $Destination,
-        [Parameter(ParameterSetName = "")]
         [object] $List,
         [Parameter(ParameterSetName = "")]
-        [string] $Path,
-        [switch] $Expand
+        [string] $Output, # 預設為 "$gitDirName-$Commit.zip"
+                          #   1. Output為Zip: "$Output.zip"
+                          #   2. Output為Dir: "$Output\$gitDirName-$Commit.zip"
+        [Parameter(ParameterSetName = "")]
+        [string] $Path, # 預設為當前工作目錄
+        [switch] $Expand # 1. 路徑為目錄: 直接輸出檔案到目錄
+                         # 2. 路徑為Zip : 原地解壓縮Zip
     )
     # 檢測路徑
     [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
-    $curDir = (Get-Location).Path
-    if (!$Path) { $Path = $curDir } else {
+    if ($Path) {
         $Path = [System.IO.Path]::GetFullPath($Path)
-        if (!(Test-Path $Path)) {
-            Write-Host "Error:: Path is not exist." -ForegroundColor:Yellow; return
-        }
-    }
+        if (!(Test-Path -PathType:Container "$Path\.git")) { Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction:Stop }
+    } else { $Path = Get-Location}
+    
     # 設置路徑與
     $gitDirName = (Split-Path $Path -Leaf)
     if (!$Commit) { $Commit = "HEAD" }
     $defDstName = "$gitDirName-$Commit.zip"
-    if ($Destination) { # 有路徑且為資料夾
-        if (!(Split-Path $Destination -Extension)) { $Destination = "$Destination\archiveCommit\$defDstName" }
+    if ($Output) { # 有路徑且為資料夾時創建自動檔名
+        if (!(Split-Path $Output -Extension)) { $Output = "$Output\$defDstName"; $OutputIsDir = $true }
     } else { # 路徑為空
-        $Destination = $defDstName
-    } $Destination = [System.IO.Path]::GetFullPath($Destination)
+        $Output = $defDstName
+    } $Output = [System.IO.Path]::GetFullPath($Output)
     # 設置命令
-    $cmd = "git archive -o '$Destination' $Commit $List".Trim()
+    $cmd = ("git archive -o '$Output' $Commit $List").Trim()
     # 打包差異的檔案
     if ($cmd) {
-        Set-location $Path
-        $dstDir = (Split-Path $Destination -Parent)
+        if ($Path) { $curDir = (Get-Location).Path; Set-location $Path }
+        $dstDir = (Split-Path $Output -Parent)
         if (!(Test-Path $dstDir)) { New-Item -ItemType Directory $dstDir  -Force | Out-Null }
         Invoke-Expression $cmd
         # Write-Host $cmd -ForegroundColor:Yellow
-        Set-location $curDir
+        if ($Path) { Set-location $curDir }
     }
     # 解壓縮並刪除檔案
     if ($Expand) {
-        $ExpPath = "$(Split-Path $Destination)\$gitDirName"
-        Expand-Archive $Destination $ExpPath -Force; Remove-Item
-    }
-    return $Destination
-} # archiveCommit "Z:\doc"
-# $list = (diffCommit INIT0 master -Path "Z:\doc")
-# archiveCommit -Path:"Z:\doc" -List:($list.Name) master 'acvFile\doc-master.zip'
-# archiveCommit -Path:"Z:\doc" -List:($list.Name) INIT0 'acvFile\doc-INIT0.zip'
-# archiveCommit
-# archiveCommit -Path:"Z:\doc" HEAD $env:TEMP
-# archiveCommit -Path:"Z:\doc" HEAD 'archive.zip'
+        if ($OutputIsDir) { # 解壓縮到目標資料夾並刪除 zip 檔案
+            $ExpPath = Split-Path $Output
+            $ExpPath = [System.IO.Path]::GetFullPath($ExpPath)
+            
+            if ($ExpPath -eq $Path) { $Output=$null; Write-Error "The `$Output location is the same as the Git directory." } else {
+                Expand-Archive $Output $ExpPath -Force
+                Remove-Item $Output
+                $Output = $ExpPath
+            }
+        } else { # 僅解壓縮
+            $ExpPath = "$(Split-Path $Output)\$(Split-Path $Output -LeafBase)"
+            $ExpPath = [System.IO.Path]::GetFullPath($ExpPath)
+            if ($ExpPath -eq $Path) { Write-Warning "The unzip location is the same as the Git directory, Program will not decompress." } else {
+                Expand-Archive $Output $ExpPath -Force
+            }
+        }
+    } return $Output
+} # archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit"
+
+# archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\doc-HEAD" -Expand
+# archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip" -Expand
+# archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit"
+# archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip"
+# 例外測試
+# archiveCommit -Output:(Get-Location) HEAD -Expand
+# archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"Z:\doc" -Expand
+# archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"Z:\doc.zip" -Expand
+
 
 
 # archiveDiffCommit 別名
