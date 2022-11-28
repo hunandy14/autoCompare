@@ -71,7 +71,7 @@ function archiveCommit {
                           #   1. Output為Zip: "$Output.zip"
                           #   2. Output為Dir: "$Output\$gitDirName-$Commit.zip"
         [Parameter(ParameterSetName = "")]
-        [string] $Path, # 預設為當前工作目錄
+        [string] $Path,  # 預設為當前工作目錄
         [switch] $Expand # 1. 路徑為目錄: 直接輸出檔案到目錄
                          # 2. 路徑為Zip : 原地解壓縮Zip
     )
@@ -87,7 +87,15 @@ function archiveCommit {
     if (!$Commit) { $Commit = "HEAD" }
     $defDstName = "$gitDirName-$Commit.zip"
     if ($Output) { # 有路徑且為資料夾時創建自動檔名
-        if (!(Split-Path $Output -Extension)) { $Output = "$Output\$defDstName"; $OutputIsDir = $true }
+        if (!(Split-Path $Output -Extension)) {
+            $OutputIsDir = $true
+            $tmpDstName = "archiveCommit-temp.zip"
+            if ($Expand) {
+                $Output = "$Output\$tmpDstName";
+            } else {
+                $Output = "$Output\$defDstName"
+            }
+        }
     } else { # 路徑為空
         $Output = $defDstName
     } $Output = [System.IO.Path]::GetFullPath($Output)
@@ -107,10 +115,9 @@ function archiveCommit {
         if ($OutputIsDir) { # 解壓縮到目標資料夾並刪除 zip 檔案
             $ExpPath = Split-Path $Output
             $ExpPath = [System.IO.Path]::GetFullPath($ExpPath)
-            
             if ($ExpPath -eq $Path) { $Output=$null; Write-Error "The `$Output location is the same as the Git directory." } else {
                 Expand-Archive $Output $ExpPath -Force
-                Remove-Item $Output
+                if ((Split-Path $Output -Leaf) -eq "archiveCommit-temp.zip") { Remove-Item $Output } # 多餘的if判斷避免砍錯檔案
                 $Output = $ExpPath
             }
         } else { # 僅解壓縮
