@@ -133,7 +133,7 @@ function archiveCommit {
         # 壓縮檔案
         if ($OutputIsDir) {
             if (!$Expand) {             # [複製到暫存路徑, 壓縮在指定路徑(自動檔名.Zip)]
-                if (!(Test-Path (Split-Path $Output -Parent))) { New-Item $Output -ItemType:Directory -Force |Out-Null }
+                if (!(Test-Path (Split-Path $Output -Parent))) { New-Item (Split-Path $Output -Parent) -ItemType:Directory -Force |Out-Null }
                 Compress-Archive -Path "$CopyTemp\*" -DestinationPath "$Output" -Force
                 return $Output
             }else {                     # [複製到指定路徑]
@@ -141,11 +141,11 @@ function archiveCommit {
             }
         } else {
             if (!$Expand) {             # [複製到暫存路徑, 壓縮在指定路徑(自定檔名.Zip)]
-                if (!(Test-Path (Split-Path $Output -Parent))) { New-Item $Output -ItemType:Directory -Force |Out-Null }
+                if (!(Test-Path (Split-Path $Output -Parent))) { New-Item (Split-Path $Output -Parent) -ItemType:Directory -Force |Out-Null }
                 Compress-Archive "$CopyTemp\*" $Output -Force
                 return $Output
             } else {                    # [複製到指定路徑2, 壓縮在指定路徑(自定檔名.Zip)]
-                if (!(Test-Path (Split-Path $Output -Parent))) { New-Item $Output -ItemType:Directory -Force |Out-Null }
+                if (!(Test-Path (Split-Path $Output -Parent))) { New-Item (Split-Path $Output -Parent) -ItemType:Directory -Force |Out-Null }
                 Compress-Archive "$CopyTemp\*" $Output -Force
                 return $CopyTemp
             }
@@ -195,6 +195,7 @@ function archiveCommit {
 # archiveCommit "" EAWD1100.css, EAWD1100.js -Path:"Z:\doc"
 # Expand測試
 # archiveCommit "" EAWD1100.css, EAWD1100.js -Path:"Z:\doc"
+# archiveCommit "" EAWD1100.css, EAWD1100.js -Path:"Z:\doc" -Output:"archiveCommit"
 # archiveCommit "" EAWD1100.css, EAWD1100.js -Path:"Z:\doc" -Output:"archiveCommit.zip"
 # archiveCommit "" EAWD1100.css, EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit"
 # archiveCommit "" EAWD1100.css, EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\doc" -Expand
@@ -227,8 +228,8 @@ function archiveDiffCommit {
         $Path = [System.IO.Path]::GetFullPath($Path)
         if (!(Test-Path -PathType:Container "$Path\.git")) { Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction:Stop }
     }
-    if (!$Commit1) { $Commit1 = 'HEAD' }
-    if (!$Commit2) { $Commit2 = "$Commit1"; $Commit1 = "$Commit1^" }
+    # if (!$Commit1) { $Commit1 = 'HEAD' }
+    # if (!$Commit2) { $Commit2 = "$Commit1"; $Commit1 = "$Commit1^" }
     # Write-Host $Commit1 -> $Commit2
     
     # 獲取 節點1 差異檔案 (變更前)
