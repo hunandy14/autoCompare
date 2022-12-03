@@ -120,7 +120,7 @@ function archiveCommit {
             } else { # 複製到指定路徑(包含zip檔名)
                 $CopyTemp = (Split-Path $Output -Parent)+"\"+(Split-Path $Output -LeafBase)
             }
-            if ($ExpPath -eq $Path) { # 禁止複製到相同位置
+            if ($CopyTemp -eq $Path) { # 禁止複製到相同位置
                 Write-Error "The `$Output location is the same as the Git directory."; return
             }
             if ((Test-Path $CopyTemp) -and (Get-ChildItem $CopyTemp)) { # 禁止複製到非空目錄造成覆蓋
