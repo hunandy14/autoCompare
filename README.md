@@ -42,7 +42,11 @@ WinMergeU_Dir "source_before" "source_after" -Line:1
 
 ## 自動比對 GIT 提交點
 ```ps1
+# 比較兩個提交點
 irm bit.ly/ArchiveGitCommit|iex; irm bit.ly/DiffSource|iex; acvDC INIT HEAD |cmpSrc
+
+# 比較尚未儲存的變更
+irm bit.ly/ArchiveGitCommit|iex; irm bit.ly/DiffSource|iex; acvDC |cmpSrc
 ```
 
 
