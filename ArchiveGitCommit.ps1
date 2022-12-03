@@ -118,13 +118,14 @@ function archiveCommit {
             if ($OutputIsDir) {
                 $CopyTemp = Split-Path $Output -Parent
             } else { # 複製到指定路徑(包含zip檔名)
-                $CopyTemp = (Split-Path $Output -Parent)+"\"+(Split-Path $Output -LeafBase)
+                $CopyTemp = [IO.Path]::Combine((Split-Path $Output -Parent), (Split-Path $Output -LeafBase))
+                $CopyTemp = [IO.Path]::GetFullPath($CopyTemp)
             }
-            if ($CopyTemp -eq $Path) { # 禁止複製到相同位置
+            if ($CopyTemp -eq $Path) { # 禁止複製到Git資料夾覆蓋
                 Write-Error "The `$Output location is the same as the Git directory."; return
             }
             if ((Test-Path $CopyTemp) -and (Get-ChildItem $CopyTemp)) { # 禁止複製到非空目錄造成覆蓋
-                Write-Error "Output directory is not an empty directory, the output may be mixed with other files."; return
+                Write-Warning "Output directory `"$CopyTemp`" is not an empty directory, the output may be overwrite with other files."; return
             }
         } else { # 複製到暫存路徑
             $CopyTemp = "$env:TEMP\archiveCommitTemp"
@@ -188,16 +189,25 @@ function archiveCommit {
             if ($OutputIsDir) { # 解壓縮到目標資料夾並刪除 zip 檔案
                 $ExpPath = Split-Path $Output
                 $ExpPath = [System.IO.Path]::GetFullPath($ExpPath)
-                if ($ExpPath -eq $Path) { $Output=$null; Write-Error "The `$Output location is the same as the Git directory." } else {
-                    Expand-Archive $Output $ExpPath -Force
-                    if ((Split-Path $Output -Leaf) -eq "archiveCommit-temp.zip") { Remove-Item $Output } # 多餘的if判斷避免砍錯檔案
-                    $Output = $ExpPath
+                if (!(Test-Path $ExpPath)) { New-Item $ExpPath -ItemType:Directory -Force |Out-Null } # 不存在則創建
+                if ($ExpPath -eq $Path) { $Output=$null; Write-Error "The `$Output location is the same as the Git directory." } else { # 禁止複製到Git資料夾覆蓋
+                    if ((Test-Path $ExpPath) -and (Get-ChildItem $ExpPath)) { # 禁止複製到非空目錄造成覆蓋
+                        Write-Warning "Output directory is not an empty directory, the output may be overwrite with other files."
+                        if ((Split-Path $Output -Leaf) -eq "archiveCommit-temp.zip") { Remove-Item $Output } # 多餘的if判斷避免砍錯檔案
+                        return
+                    } else {
+                        Expand-Archive $Output $ExpPath
+                        if ((Split-Path $Output -Leaf) -eq "archiveCommit-temp.zip") { Remove-Item $Output } # 多餘的if判斷避免砍錯檔案
+                        $Output = $ExpPath
+                    }
                 }
             } else { # 僅解壓縮
                 $ExpPath = "$(Split-Path $Output)\$(Split-Path $Output -LeafBase)"
                 $ExpPath = [System.IO.Path]::GetFullPath($ExpPath)
-                if ($ExpPath -eq $Path) { Write-Warning "The unzip location is the same as the Git directory, Program will not decompress." } else {
-                    Expand-Archive $Output $ExpPath -Force
+                if ($ExpPath -eq $Path) { $Output=$null; Write-Error "The unzip location is the same as the Git directory." } else { # 禁止複製到Git資料夾覆蓋
+                    if ($ExpPath -eq $Path) { Write-Warning "The unzip location is the same as the Git directory, Program will not decompress." } else { # 禁止複製到非空目錄造成覆蓋
+                        Expand-Archive $Output $ExpPath -Force
+                    }
                 }
             }
         } return $Output
@@ -221,9 +231,13 @@ function archiveCommit {
 # archiveCommit "" EAWD1100.css, EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip"
 # archiveCommit "" EAWD1100.css, EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip" -Expand
 # 例外測試
-# archiveCommit -Output:(Get-Location) HEAD -Expand
-# archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"Z:\doc" -Expand
-# archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"Z:\doc.zip" -Expand
+# archiveCommit HEAD -Output:(Get-Location) -Expand
+# archiveCommit HEAD *.css -Path:"Z:\doc" -Output:"Z:\doc" -Expand
+# archiveCommit HEAD *.css -Path:"Z:\doc" -Output:"Z:\doc.zip" -Expand
+# 例外測試2
+# archiveCommit -Output:(Get-Location) -Expand
+# archiveCommit -Path:"Z:\doc" -Output:"Z:\doc" -Expand
+# archiveCommit -Path:"Z:\doc" -Output:"Z:\doc.zip" -Expand
 # 空節點與結合測試
 # archiveCommit -Path:"Z:\doc" -Output:"Z:\Archives" -List:((diffCommit -Path "Z:\doc").Name)
 
