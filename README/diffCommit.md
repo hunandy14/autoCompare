@@ -3,9 +3,9 @@
 # 載入函式庫
 irm bit.ly/ArchiveGitCommit|iex
 
-# [Staged -> 當前狀態] 的檔案比較 (當前狀態: 無Staged時會已HEAD為主, 當前狀態: 不包含新增的檔案)
+# [Staged -> Changed] 的檔案比較 (Staged: 沒有Staged時是HEAD, Changed: 當前狀態但不包含新增的檔案)
 irm bit.ly/ArchiveGitCommit|iex; diffCommit
-# [HEAD -> Staged] 的檔案比較  (Staged: 無Staged時會已當前狀態為主, 當前狀態: 不包含新增的檔案)
+# [HEAD -> Staged -> Changed] 的檔案比較  (Changed: 當前狀態但不包含新增的檔案)
 irm bit.ly/ArchiveGitCommit|iex; diffCommit HEAD
 # [HEAD^ -> HEAD] 的檔案比較 (全)
 irm bit.ly/ArchiveGitCommit|iex; diffCommit HEAD^ HEAD
