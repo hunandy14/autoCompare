@@ -130,8 +130,17 @@ function archiveCommit {
             $CopyTemp = "$env:TEMP\archiveCommitTemp"
             if (Test-Path "$env:TEMP\archiveCommitTemp\*") { Remove-Item "$env:TEMP\archiveCommitTemp\*" -Recurse }
         }
+        # 獲取檔案清單
+        if ($List) {
+            $FileInfo = @()
+            $List|ForEach-Object{
+                $obj = [IO.Path]::GetFullPath([IO.Path]::Combine($Path, $_))
+                $FileInfo += Get-Item $obj
+            }
+        } else { # 沒給List全輸出
+            $FileInfo = (Get-ChildItem -Path:$Path -Recurse -File)
+        }
         # 複製差異檔案到暫存目錄
-        $FileInfo = (Get-ChildItem -Path:$Path -Recurse -File)
         ($FileInfo.FullName)|ForEach-Object{
             $RelPath = [IO.Path]::GetRelativePath($Path, $_)
             $F1 = $_; $F2 = "$CopyTemp\$RelPath"
@@ -216,8 +225,7 @@ function archiveCommit {
 # archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"Z:\doc" -Expand
 # archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"Z:\doc.zip" -Expand
 # 空節點與結合測試
-# $List = (diffCommit -Path "Z:\doc").Name
-# archiveCommit -Path:"Z:\doc" -Output:"Z:\Archives" -List:$List
+# archiveCommit -Path:"Z:\doc" -Output:"Z:\Archives" -List:((diffCommit -Path "Z:\doc").Name)
 
 
 # archiveDiffCommit 別名
@@ -240,8 +248,9 @@ function archiveDiffCommit {
         $Path = [System.IO.Path]::GetFullPath($Path)
         if (!(Test-Path -PathType:Container "$Path\.git")) { Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction:Stop }
     }
-    if (!$Commit1) { $Commit1 = 'HEAD' }
-    if (!$Commit2) { $Commit2 = "$Commit1"; $Commit1 = "$Commit1^" }
+    # if (!$Commit1) { $Commit1 = 'HEAD' }
+    if ( $Commit1 -and !$Commit2) { $Commit2 = "$Commit1"; $Commit1 = "$Commit1^" }
+    if (!$Commit1 -and !$Commit2) { $Commit1 = "HEAD"}
     # Write-Host $Commit1 -> $Commit2
     
     # 獲取 節點1 差異檔案 (變更前)
@@ -249,7 +258,6 @@ function archiveDiffCommit {
     $List1 = ($List1|Where-Object{$_.Status -notin "D"})
     # $List1|Format-Table
     $Out1 = archiveCommit -Path:$Path -List:($List1.Name) -Output "$Env:TEMP\archiveDiffCommit" $Commit1
-    # $Out1
     # 獲取 節點2 差異檔案 (變更後)
     $List2 = diffCommit $Commit1 $Commit2 -Path $Path
     $List2 = ($List2|Where-Object{$_.Status -notin "D"})
@@ -258,6 +266,7 @@ function archiveDiffCommit {
     # $Out2
     # DiffSource $Out1 $Out2
     # 輸出物件
+    if ($Commit1 -and !$Commit2) { $Commit2 = "CURR"}
     $Obj = @()
     $Obj += [PSCustomObject]@{
         Commit   = $Commit1
@@ -286,4 +295,5 @@ function archiveDiffCommit {
 # acvDC INIT0 HEAD -Path:"Z:\doc"|cmpSrc
 # acvDC HEAD -Path:"Z:\doc" |cmpSrc
 # acvDC -Path:"Z:\doc" |cmpSrc
-# acvDC -Path:"Z:\doc"
+# (acvDC -Path:"Z:\doc")|cmpSrc
+# acvDC|cmpSrc
