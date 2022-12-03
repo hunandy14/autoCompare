@@ -89,8 +89,13 @@ function archiveCommit {
     
     # 設置路徑
     $gitDirName = (Split-Path $Path -Leaf)
-    if (!$Commit) { $Commit = "HEAD"; $CommitIsNull=$true }
-    $defDstName = "$gitDirName-$Commit.zip"
+    if (!$Commit) {
+        $Commit = ""; $CommitIsNull=$true
+        $defDstName = "$gitDirName-CurrStatus.zip"
+    } else {
+        $defDstName = "$gitDirName-$Commit.zip"
+    }
+    # 設置輸出
     if ($Output) { # 有路徑且為資料夾時創建自動檔名
         if (!(Split-Path $Output -Extension)) {
             $OutputIsDir = $true
@@ -115,13 +120,18 @@ function archiveCommit {
             } else { # 複製到指定路徑(包含zip檔名)
                 $CopyTemp = (Split-Path $Output -Parent)+"\"+(Split-Path $Output -LeafBase)
             }
-            if ((Test-Path $CopyTemp) -and (Get-ChildItem $CopyTemp)) { Write-Warning "Output directory is not an empty directory, the output may be mixed with other files." }
+            if ($ExpPath -eq $Path) { # 禁止複製到相同位置
+                Write-Error "The `$Output location is the same as the Git directory."; return
+            }
+            if ((Test-Path $CopyTemp) -and (Get-ChildItem $CopyTemp)) { # 禁止複製到非空目錄造成覆蓋
+                Write-Error "Output directory is not an empty directory, the output may be mixed with other files."; return
+            }
         } else { # 複製到暫存路徑
             $CopyTemp = "$env:TEMP\archiveCommitTemp"
             if (Test-Path "$env:TEMP\archiveCommitTemp\*") { Remove-Item "$env:TEMP\archiveCommitTemp\*" -Recurse }
         }
         # 複製差異檔案到暫存目錄
-        $FileInfo = (Get-ChildItem -Path:$Path -Include:$List -Recurse -File)
+        $FileInfo = (Get-ChildItem -Path:$Path -Recurse -File)
         ($FileInfo.FullName)|ForEach-Object{
             $RelPath = [IO.Path]::GetRelativePath($Path, $_)
             $F1 = $_; $F2 = "$CopyTemp\$RelPath"
@@ -205,7 +215,9 @@ function archiveCommit {
 # archiveCommit -Output:(Get-Location) HEAD -Expand
 # archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"Z:\doc" -Expand
 # archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"Z:\doc.zip" -Expand
-
+# 空節點與結合測試
+# $List = (diffCommit -Path "Z:\doc").Name
+# archiveCommit -Path:"Z:\doc" -Output:"Z:\Archives" -List:$List
 
 
 # archiveDiffCommit 別名
