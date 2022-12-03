@@ -228,21 +228,21 @@ function archiveDiffCommit {
         $Path = [System.IO.Path]::GetFullPath($Path)
         if (!(Test-Path -PathType:Container "$Path\.git")) { Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction:Stop }
     }
-    # if (!$Commit1) { $Commit1 = 'HEAD' }
-    # if (!$Commit2) { $Commit2 = "$Commit1"; $Commit1 = "$Commit1^" }
+    if (!$Commit1) { $Commit1 = 'HEAD' }
+    if (!$Commit2) { $Commit2 = "$Commit1"; $Commit1 = "$Commit1^" }
     # Write-Host $Commit1 -> $Commit2
     
     # 獲取 節點1 差異檔案 (變更前)
     $List1 = diffCommit $Commit2 $Commit1 -Path $Path
     $List1 = ($List1|Where-Object{$_.Status -notin "D"})
     # $List1|Format-Table
-    $Out1 = archiveCommit -Path:$Path -List:($List1.Name) $Commit1 $Env:TEMP
+    $Out1 = archiveCommit -Path:$Path -List:($List1.Name) -Output "$Env:TEMP\archiveDiffCommit" $Commit1
     # $Out1
     # 獲取 節點2 差異檔案 (變更後)
     $List2 = diffCommit $Commit1 $Commit2 -Path $Path
     $List2 = ($List2|Where-Object{$_.Status -notin "D"})
     # $List2|Format-Table
-    $Out2 = archiveCommit -Path:$Path -List:($List2.Name) $Commit2 $Env:TEMP
+    $Out2 = archiveCommit -Path:$Path -List:($List2.Name) -Output "$Env:TEMP\archiveDiffCommit" $Commit2
     # $Out2
     # DiffSource $Out1 $Out2
     # 輸出物件
@@ -265,9 +265,13 @@ function archiveDiffCommit {
 # archiveDiffCommit INIT0 HEAD -Path:"Z:\doc" -Include:@("*.css")
 # DiffSource "doc-INIT0.zip" "doc-HEAD.zip"
 # archiveDiffCommit INIT0 HEAD -Path:"Z:\doc"
+# 空節點測試
+# archiveDiffCommit -Path:"Z:\doc" -Include EAWD1100.css,EAWD1100.js
+
 # 
 # 比較git節點
 # Invoke-RestMethod "raw.githubusercontent.com/hunandy14/autoCompare/master/DiffSource.ps1"|Invoke-Expression
 # acvDC INIT0 HEAD -Path:"Z:\doc"|cmpSrc
 # acvDC HEAD -Path:"Z:\doc" |cmpSrc
 # acvDC -Path:"Z:\doc" |cmpSrc
+# acvDC -Path:"Z:\doc"
