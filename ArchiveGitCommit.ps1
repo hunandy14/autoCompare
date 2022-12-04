@@ -13,9 +13,11 @@ function diffCommit {
     # 檢測路徑
     if ($Path) {
         [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
+        $Path = $Path -replace("^Microsoft.PowerShell.Core\\FileSystem::")
         $Path = [System.IO.Path]::GetFullPath($Path)
-        if (!(Test-Path -PathType:Container "$Path\.git")) { Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction:Stop }
-    }
+    } else { $Path = Get-Location}
+    $Path = $Path -replace("^Microsoft.PowerShell.Core\\FileSystem::")
+    if (!(Test-Path -PathType:Container "$Path\.git")) { Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction:Stop }
     # 命令
     if ($Filter) { $Filter = " --diff-filter=$Filter" }
     $cmd1 = "git diff --name-status$Filter $Commit1 $Commit2".Trim()
@@ -82,6 +84,7 @@ function archiveCommit {
     # 檢測路徑
     [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
     if ($Path) {
+        $Path = $Path -replace("^Microsoft.PowerShell.Core\\FileSystem::")
         $Path = [System.IO.Path]::GetFullPath($Path)
     } else { $Path = Get-Location}
     $Path = $Path -replace("^Microsoft.PowerShell.Core\\FileSystem::")
