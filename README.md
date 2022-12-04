@@ -1,13 +1,28 @@
 ## 使用範例
 
 ## 自動比對 GIT 提交點
+比較尚未儲存的變更
 ```ps1
-# 比較兩個提交點
-irm bit.ly/ArchiveGitCommit|iex; irm bit.ly/DiffSource|iex; acvDC INIT HEAD |cmpSrc
-
-# 比較尚未儲存的變更
-irm bit.ly/ArchiveGitCommit|iex; irm bit.ly/DiffSource|iex; acvDC |cmpSrc
+irm bit.ly/DiffGitSource|iex; acvDC |cmpSrc
 ```
+
+比較兩個提交點
+```ps1
+irm bit.ly/DiffGitSource|iex; acvDC INIT HEAD |cmpSrc
+```
+
+詳細使用說明
+```ps1
+# 載入函式
+irm bit.ly/DiffGitSource|iex;
+
+# 比較尚未儲存的變更(新增的檔案不會被列入)
+irm bit.ly/DiffGitSource|iex; acvDC|cmpSrc
+
+# 比較HEAD到Staged的變更
+irm bit.ly/DiffGitSource|iex; acvDC HEAD|cmpSrc
+```
+
 
 
 <br><br><br>
