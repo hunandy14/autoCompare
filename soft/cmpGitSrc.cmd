@@ -10,7 +10,14 @@ Exit %errorlevel%
 :PwshScript#:: script1
 #:: --------------------------------------------------------------------------------------------------------------------------------
 Write-Host "by PSVersion::" $PSVersionTable.PSVersion
-acvDC|cmpSrc
+
+$CommitLeft  = ""
+$CommitRight = ""
+$GitDir      = ""
+$Line        = -1
+$IgnoreWhite = $false
+
+acvDC $CommitLeft $CommitRight -Path $GitDir | cmpSrc -IgnoreWhite:$IgnoreWhite -Line $Line
 
 
 :PwshScript#:: script2
