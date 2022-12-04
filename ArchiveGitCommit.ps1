@@ -272,7 +272,7 @@ function archiveDiffCommit {
     if (!$Commit1 -and !$Commit2) { $Commit1 = "HEAD"; $IsCurrStatusDiff=$true}
     # Write-Host $Commit1 -> $Commit2
     
-    # 獲取 節點1 差異檔案 (變更前)
+    # 獲取 節點1 差異清單 (變更前)
     $List1 = diffCommit $Commit2 $Commit1 -Path $Path
     if ($IsCurrStatusDiff) {
         # 因為git的省參數狀態只能比較[HEAD->CURR]不能比較[CURR->HEAD]，直觀的解法把A跟D反過來就好
@@ -280,13 +280,28 @@ function archiveDiffCommit {
     } else {
         $List1 = ($List1|Where-Object{$_.Status -notin "D"})
     }
-    # $List1|Format-Table
-    $Out1 = archiveCommit -Path:$Path -List:($List1.Name) -Output "$Env:TEMP\archiveDiffCommit" $Commit1
-    # 獲取 節點2 差異檔案 (變更後)
+    # 獲取 節點2 差異清單 (變更後)
     $List2 = diffCommit $Commit1 $Commit2 -Path $Path
     $List2 = ($List2|Where-Object{$_.Status -notin "D"})
-    # $List2|Format-Table
-    $Out2 = archiveCommit -Path:$Path -List:($List2.Name) -Output "$Env:TEMP\archiveDiffCommit" $Commit2
+    # 獲取 節點 差異檔案 (變更後)
+    if ($List1) {$Out1 = archiveCommit -Path:$Path -List:($List1.Name) -Output "$Env:TEMP\archiveDiffCommit" $Commit1}
+    if ($List2) {$Out2 = archiveCommit -Path:$Path -List:($List2.Name) -Output "$Env:TEMP\archiveDiffCommit" $Commit2}
+    
+    # Zip的定義中沒辦法存在空zip，遇到List1為空做一個空檔案比較
+    if (!$List1) {
+        $emptyFile = "$Env:TEMP\_"
+        $emptyZip = "$Env:TEMP\archiveDiffCommit\$($Commit1)_CommitIsNonDiffFile.zip"
+        if (!(Test-Path $emptyFile)) { New-Item $emptyFile -ItemType:File|Out-Null }
+        Compress-Archive $emptyFile $emptyZip -Force
+        $Out1=$emptyZip
+    }
+    if (!$List2) {
+        $emptyFile = "$Env:TEMP\_"
+        $emptyZip = "$Env:TEMP\archiveDiffCommit\$($Commit2)_CommitIsNonDiffFile.zip"
+        if (!(Test-Path $emptyFile)) { New-Item $emptyFile -ItemType:File|Out-Null }
+        Compress-Archive $emptyFile $emptyZip -Force
+        $Out2=$emptyZip
+    }
     
     # 輸出物件
     if ($Commit1 -and !$Commit2) { $Commit2 = "CURR"}
@@ -321,4 +336,4 @@ function archiveDiffCommit {
 # acvDC HEAD -Path:"Z:\doc" |cmpSrc
 # acvDC -Path:"Z:\doc" |cmpSrc
 # (acvDC -Path:"Z:\doc")|cmpSrc
-# acvDC|cmpSrc
+# acvDC -Path:"Z:\doc"|cmpSrc
