@@ -33,7 +33,9 @@ function Install-WinMerge {
     }
     
     # 驗證安裝
-    if (!(Get-Command $CmdName -CommandType:Application -EA:0)) { Write-Host "Error:: WinMerge installation failed." -ForegroundColor:Yellow; Exit }
+    if (!(Get-Command $CmdName -CommandType:Application -EA:0)) { Write-Error "Error:: WinMerge installation failed." -ForegroundColor:Yellow; return } else {
+        return $AppExec
+    }
 } # Install-WinMerge -Force
 
 
@@ -67,7 +69,7 @@ function DiffSource {
     # 輸入為 InputObject 時
     if ($InputObject) { $LeftPath = $ItemObject[0]; $RightPath = $ItemObject[1]; }
     # 安裝WinMerge (已安裝會自動退出)
-    Install-WinMerge
+    Install-WinMerge|Out-Null
     # 測試路徑
     if ($LeftPath  -and !(Test-Path $LeftPath )) { Write-Host "Error:: LeftPath is not exist."  -ForegroundColor:Yellow ; return }
     if ($RightPath -and !(Test-Path $RightPath)) { Write-Host "Error:: RightPath is not exist."  -ForegroundColor:Yellow; return }
