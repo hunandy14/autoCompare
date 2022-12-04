@@ -270,12 +270,17 @@ function archiveDiffCommit {
     if (!(Test-Path -PathType:Container "$Path\.git")) { Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction:Stop }
     # if (!$Commit1) { $Commit1 = 'HEAD' }
     if ( $Commit1 -and !$Commit2) { $Commit2 = "$Commit1"; $Commit1 = "$Commit1^" }
-    if (!$Commit1 -and !$Commit2) { $Commit1 = "HEAD"}
-    # Write-Host $Commit1 -> $Commit2
+    if (!$Commit1 -and !$Commit2) { $Commit1 = "HEAD"; $IsCurrStatusDiff=$true}
+    Write-Host $Commit1 -> $Commit2
     
     # 獲取 節點1 差異檔案 (變更前)
     $List1 = diffCommit $Commit2 $Commit1 -Path $Path
-    $List1 = ($List1|Where-Object{$_.Status -notin "D"})
+    if ($IsCurrStatusDiff) {
+        # 因為git的省參數狀態只能比較[HEAD->CURR]不能比較[CURR->HEAD]，直觀的解法把A跟D反過來就好
+        $List1 = ($List1|Where-Object{$_.Status -notin "A"})
+    } else {
+        $List1 = ($List1|Where-Object{$_.Status -notin "D"})
+    }
     # $List1|Format-Table
     $Out1 = archiveCommit -Path:$Path -List:($List1.Name) -Output "$Env:TEMP\archiveDiffCommit" $Commit1
     # 獲取 節點2 差異檔案 (變更後)
@@ -298,6 +303,8 @@ function archiveDiffCommit {
     }
     return $Obj
 }
+# 輸出 [HEAD -> CURR] 差異檔案
+# archiveDiffCommit -Path:"Z:\doc"
 # 輸出 [HEAD^ -> HEAD] 差異檔案
 # archiveDiffCommit HEAD -Path:"Z:\doc"
 # 輸出 [INIT -> HEAD] 差異檔案
