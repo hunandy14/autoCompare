@@ -85,6 +85,7 @@ function archiveCommit {
         $Path = [System.IO.Path]::GetFullPath($Path)
         if (!(Test-Path -PathType:Container "$Path\.git")) { Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction:Stop }
     } else { $Path = Get-Location}
+    $Path = $Path -replace("^Microsoft.PowerShell.Core\\FileSystem::")
     
     
     # 設置路徑
@@ -140,6 +141,7 @@ function archiveCommit {
             }
         } else { # 沒給List全輸出
             $FileInfo = (Get-ChildItem -Path:$Path -Recurse -File)
+            $FileInfo = $FileInfo|Where-Object{$_.FullName -notmatch ".git\*"}
         }
         # 複製差異檔案到暫存目錄
         ($FileInfo.FullName)|ForEach-Object{
@@ -223,7 +225,7 @@ function archiveCommit {
 # archiveCommit "" EAWD1100.css, EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit"
 # archiveCommit "" EAWD1100.css, EAWD1100.js -Path:"Z:\doc"
 # Expand測試
-# archiveCommit "" EAWD1100.css, EAWD1100.js -Path:"Z:\doc"
+# archiveCommit "" css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc"
 # archiveCommit "" EAWD1100.css, EAWD1100.js -Path:"Z:\doc" -Output:"archiveCommit"
 # archiveCommit "" EAWD1100.css, EAWD1100.js -Path:"Z:\doc" -Output:"archiveCommit.zip"
 # archiveCommit "" EAWD1100.css, EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit"
@@ -252,9 +254,7 @@ function archiveDiffCommit {
         [Parameter(Position = 1, ParameterSetName = "")]
         [string] $Commit2,
         [Parameter(ParameterSetName = "")]
-        [string] $Path,
-        [Parameter(ParameterSetName = "")]
-        [object] $Include
+        [string] $Path
     )
     # 檢測路徑
     if ($Path) {
