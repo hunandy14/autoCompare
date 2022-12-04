@@ -98,7 +98,9 @@ function archiveCommit {
     }
     # 設置輸出
     if ($Output) { # 有路徑且為資料夾時創建自動檔名
-        if (!(Split-Path $Output -Extension)) {
+        $Output -match "[^\\]+(?!.*\\)" |Out-Null
+        $Path_FileName = $Matches[0]
+        if ($Path_FileName -notmatch "\.") {
             $OutputIsDir = $true
             $tmpDstName = "archiveCommit-temp.zip"
             if ($Expand) {
@@ -221,17 +223,17 @@ function archiveCommit {
 # archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit"
 # archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip"
 # 空Comit測試
-# archiveCommit "" EAWD1100.css, EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip"
-# archiveCommit "" EAWD1100.css, EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit"
-# archiveCommit "" EAWD1100.css, EAWD1100.js -Path:"Z:\doc"
+# archiveCommit "" css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip"
+# archiveCommit "" css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit"
+# archiveCommit "" css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc"
 # Expand測試
 # archiveCommit "" css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc"
-# archiveCommit "" EAWD1100.css, EAWD1100.js -Path:"Z:\doc" -Output:"archiveCommit"
-# archiveCommit "" EAWD1100.css, EAWD1100.js -Path:"Z:\doc" -Output:"archiveCommit.zip"
-# archiveCommit "" EAWD1100.css, EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit"
-# archiveCommit "" EAWD1100.css, EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\doc" -Expand
-# archiveCommit "" EAWD1100.css, EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip"
-# archiveCommit "" EAWD1100.css, EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip" -Expand
+# archiveCommit "" css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"archiveCommit"
+# archiveCommit "" css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"archiveCommit.zip"
+# archiveCommit "" css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit"
+# archiveCommit "" css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\doc" -Expand
+# archiveCommit "" css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip"
+# archiveCommit "" css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip" -Expand
 # 例外測試
 # archiveCommit HEAD -Output:(Get-Location) -Expand
 # archiveCommit HEAD *.css -Path:"Z:\doc" -Output:"Z:\doc" -Expand
