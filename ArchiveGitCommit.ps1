@@ -266,7 +266,7 @@ function archiveDiffCommit {
     if ($Path) {
         [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
         $Path = [System.IO.Path]::GetFullPath($Path)
-    }
+    } else { $Path = Get-Location}
     if (!(Test-Path -PathType:Container "$Path\.git")) { Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction:Stop }
     # if (!$Commit1) { $Commit1 = 'HEAD' }
     if ( $Commit1 -and !$Commit2) { $Commit2 = "$Commit1"; $Commit1 = "$Commit1^" }
