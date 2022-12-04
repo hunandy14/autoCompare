@@ -221,7 +221,6 @@ function archiveCommit {
         } return $Output
     }
 } # archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit"
-
 # archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\doc-HEAD" -Expand
 # archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip" -Expand
 # archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit"
@@ -271,7 +270,7 @@ function archiveDiffCommit {
     # if (!$Commit1) { $Commit1 = 'HEAD' }
     if ( $Commit1 -and !$Commit2) { $Commit2 = "$Commit1"; $Commit1 = "$Commit1^" }
     if (!$Commit1 -and !$Commit2) { $Commit1 = "HEAD"; $IsCurrStatusDiff=$true}
-    Write-Host $Commit1 -> $Commit2
+    # Write-Host $Commit1 -> $Commit2
     
     # 獲取 節點1 差異檔案 (變更前)
     $List1 = diffCommit $Commit2 $Commit1 -Path $Path
@@ -288,8 +287,7 @@ function archiveDiffCommit {
     $List2 = ($List2|Where-Object{$_.Status -notin "D"})
     # $List2|Format-Table
     $Out2 = archiveCommit -Path:$Path -List:($List2.Name) -Output "$Env:TEMP\archiveDiffCommit" $Commit2
-    # $Out2
-    # DiffSource $Out1 $Out2
+    
     # 輸出物件
     if ($Commit1 -and !$Commit2) { $Commit2 = "CURR"}
     $Obj = @()
