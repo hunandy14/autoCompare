@@ -146,14 +146,18 @@ function archiveCommit {
             $FileInfo = $FileInfo|Where-Object{$_.FullName -notmatch ".git\*"}
         }
         # 複製差異檔案到暫存目錄
+        $curDir_tmp = Get-Location
+        Set-Location $Path;
         ($FileInfo.FullName)|ForEach-Object{
-            $RelPath = [IO.Path]::GetRelativePath($Path, $_)
+            # $RelPath = [IO.Path]::GetRelativePath($Path, $_) # 舊版Pwsh不支援
+            $RelPath = ($_|Resolve-Path -Relative) -replace("\.\\")
             $F1 = $_; $F2 = "$CopyTemp\$RelPath"
             $ParentPath = (Split-Path $F2 -Parent)
             if (!(Test-Path $ParentPath)) { New-Item $ParentPath -ItemType:Directory -Force |Out-Null }
             # Write-Host $F1; Write-Host "  ->" $F2
             Copy-Item $F1 $F2
         }
+        Set-Location $curDir_tmp
         # 壓縮檔案
         if ($OutputIsDir) {
             if (!$Expand) {             # [複製到暫存路徑, 壓縮在指定路徑(自動檔名.Zip)]
