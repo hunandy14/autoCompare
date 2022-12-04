@@ -83,9 +83,9 @@ function archiveCommit {
     [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
     if ($Path) {
         $Path = [System.IO.Path]::GetFullPath($Path)
-        if (!(Test-Path -PathType:Container "$Path\.git")) { Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction:Stop }
     } else { $Path = Get-Location}
     $Path = $Path -replace("^Microsoft.PowerShell.Core\\FileSystem::")
+    if (!(Test-Path -PathType:Container "$Path\.git")) { Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction:Stop }
     
     
     # 設置路徑
