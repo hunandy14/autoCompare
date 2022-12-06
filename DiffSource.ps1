@@ -76,6 +76,7 @@ function DiffSource {
     if ($Output) {
         [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
         $Output = [System.IO.Path]::GetFullPath($Output)
+        $Output = $Output -replace("^Microsoft.PowerShell.Core\\FileSystem::")
         if (!($Output -match ".html$")) { Write-Host "Error:: Output Path is not HTML file." -ForegroundColor:Yellow; return }
     } else { $Output = "$env:TEMP\DiffSource\index.html" }
     
