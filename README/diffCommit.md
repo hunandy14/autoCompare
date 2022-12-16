@@ -1,4 +1,14 @@
 ## 獲取 Git 倉庫的差異清單
+快速使用
+```ps1
+irm bit.ly/ArchiveGitCommit|iex; diffCommit INIT
+```
+
+> 當Commit參數只有一個的時候是代表起點，此時終點是Changed
+
+<br><br>
+
+詳細說明
 ```ps1
 # 載入函式庫
 irm bit.ly/ArchiveGitCommit|iex
@@ -24,9 +34,12 @@ irm bit.ly/ArchiveGitCommit|iex; diffCommit -Filter "ADMR"
 >    2. 正確的作法是Stage後指定起點為HEAD(終點留空)
 > 3. 在沒有Staged的情況下起點指定HEAD與省略是完全一樣的結果 [HEAD -> 當前狀態]
 
-<br><br>
 
-> [關於 Filter 的詳細說明](https://explainshell.com/explain?cmd=git+diff+--name-only+--cached+--diff-filter%3DACMR+--ignore-space-at-eol+-M100%25)
+
+<br><br><br>
+
+## 關於 Filter 的詳細說明:: [連結](https://explainshell.com/explain?cmd=git+diff+--name-only+--cached+--diff-filter%3DACMR+--ignore-space-at-eol+-M100%25)
+
 ```txt
 --diff-filter=[(A|C|D|M|R|T|U|X|B)...[*]]
     Select only files that are Added (A), Copied (C), Deleted (D), Modified (M), Renamed (R), have their
@@ -36,4 +49,3 @@ irm bit.ly/ArchiveGitCommit|iex; diffCommit -Filter "ADMR"
     that matches other criteria in the comparison; if there is no file that matches other criteria,
     nothing is selected.
 ```
-

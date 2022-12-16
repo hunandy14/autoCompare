@@ -4,7 +4,9 @@
 irm bit.ly/ArchiveGitCommit|iex; archiveCommit HEAD
 ```
 
-<br>
+> 當Commit參數留空時檔案是從Current(當前檔案狀態)取出
+
+<br><br>
 
 詳細說明
 ```ps1
@@ -16,14 +18,16 @@ archiveCommit
 # 輸出HEAD節點的檔案全
 archiveCommit HEAD
 # 過濾取出特定檔案
-archiveCommit HEAD "README.md", ".gitignore"
+archiveCommit HEAD -List "README.md",".gitignore"
 
 # 指定git倉庫位置
 archiveCommit HEAD -Path:"Z:\doc"
 
 # 解壓輸出縮檔案 (省略Output會輸出到Temp)
-archiveCommit HEAD -Expand
 archiveCommit HEAD "README.md" -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit"
+
+# 解壓輸出檔案
+archiveCommit HEAD -Expand 
 ```
 
 <br><br>
