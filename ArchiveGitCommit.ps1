@@ -72,6 +72,11 @@ function archiveCommit {
         [string] $Output, # 預設為 "$gitDirName-$Commit.zip"
                           #   A. Output為Zip: 保持手動"$Output.zip"
                           #   B. Output為Dir: 檔名自動"$Output\$gitDirName-$Commit.zip"
+        [switch] $OutputToTemp,
+        [Parameter(ParameterSetName = "")] # 只有當Output為資料夾且Expand有啟用才有作用
+        [switch] $ConvertToSystemEncoding,
+        [switch] $ConvertToUTF8,
+        [switch] $ConvertToUTF8BOM,
         [Parameter(ParameterSetName = "")]
         [string] $Path,  # 預設為當前工作目錄
         [switch] $Expand # A. 路徑為目錄:
@@ -89,6 +94,11 @@ function archiveCommit {
     } else { $Path = Get-Location}
     $Path = $Path -replace("^Microsoft.PowerShell.Core\\FileSystem::")
     if (!(Test-Path -PathType:Container "$Path\.git")) { Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction:Stop }
+    # 輸出到暫存
+    if ($OutputToTemp) {
+        $Output = "$env:TEMP\ArchiveOutFile"
+        if (Test-Path "$env:TEMP\ArchiveOutFile\*") { Remove-Item "$env:TEMP\ArchiveOutFile\*" -Recurse }
+    }
     
     
     # 設置路徑
@@ -131,7 +141,7 @@ function archiveCommit {
                 Write-Error "The `$Output location is the same as the Git directory."; return
             }
             if ((Test-Path $CopyTemp) -and (Get-ChildItem $CopyTemp)) { # 禁止複製到非空目錄造成覆蓋
-                Write-Warning "Output directory `"$CopyTemp`" is not an empty directory, the output may be overwrite with other files."; return
+                Write-Warning "Copy directory `"$CopyTemp`" is not an empty directory, may be overwrite with other files."; return
             }
         } else { # 複製到暫存路徑
             $CopyTemp = "$env:TEMP\archiveCommitTemp"
@@ -166,19 +176,19 @@ function archiveCommit {
             if (!$Expand) {             # [複製到暫存路徑, 壓縮在指定路徑(自動檔名.Zip)]
                 if (!(Test-Path (Split-Path $Output -Parent))) { New-Item (Split-Path $Output -Parent) -ItemType:Directory -Force |Out-Null }
                 Compress-Archive -Path "$CopyTemp\*" -DestinationPath "$Output" -Force
-                return $Output
+                $Output = $Output
             }else {                     # [複製到指定路徑]
-                return $CopyTemp
+                $Output = $CopyTemp
             }
         } else {
             if (!$Expand) {             # [複製到暫存路徑, 壓縮在指定路徑(自定檔名.Zip)]
                 if (!(Test-Path (Split-Path $Output -Parent))) { New-Item (Split-Path $Output -Parent) -ItemType:Directory -Force |Out-Null }
                 Compress-Archive "$CopyTemp\*" $Output -Force
-                return $Output
+                $Output = $Output
             } else {                    # [複製到指定路徑2, 壓縮在指定路徑(自定檔名.Zip)]
                 if (!(Test-Path (Split-Path $Output -Parent))) { New-Item (Split-Path $Output -Parent) -ItemType:Directory -Force |Out-Null }
                 Compress-Archive "$CopyTemp\*" $Output -Force
-                return $CopyTemp
+                $Output = $CopyTemp
             }
         }
         
@@ -221,25 +231,71 @@ function archiveCommit {
                     }
                 }
             }
-        } return $Output
+        }
     }
+    
+    
+    # 編碼轉換 (Output為資料夾且Expand有啟用)
+    if ((Test-Path -PathType:Container $Output) -and $Expand) {
+        # 獲取系統編碼
+        if (!$__SysEnc__) { $Script:__SysEnc__ = [Text.Encoding]::GetEncoding((powershell -nop "([Text.Encoding]::Default).WebName")) }
+        $ReadEnc=$WriteEnc=$null
+        # 編碼設置 (UTF8->System)
+        if ($ConvertToSystemEncoding) {
+            $ReadEnc  = New-Object System.Text.UTF8Encoding $False
+            $WriteEnc = $__SysEnc__
+        }
+        # 編碼設置 (System->UTF8)
+        if ($ConvertToUTF8) {
+            $ReadEnc  = $__SysEnc__
+            $WriteEnc = New-Object System.Text.UTF8Encoding $False
+        }
+        # 編碼設置 (System->UTF8BOM)
+        if ($ConvertToUTF8BOM) {
+            $ReadEnc  = $__SysEnc__
+            $WriteEnc = New-Object System.Text.UTF8Encoding $True
+        }
+        # 轉換檔案編碼
+        if ($ReadEnc -and $WriteEnc) {
+            (Get-ChildItem $Output -File -Recurse).FullName|ForEach-Object{
+                $Content = [IO.File]::ReadAllLines($_, $ReadEnc)
+                $Content = $Content -replace("`r`n","`n") -replace("`n","`r`n") -join("`r`n")
+                [IO.File]::WriteAllText($_, $Content, $WriteEnc)
+            }
+        }
+    }
+    
+    # 輸出到暫存資料夾
+    if ($OutputToTemp) {
+        # 打開輸出到暫存的資料夾或Zip資料夾
+        $OpenPath = $Output
+        if (Test-Path -PathType:Leaf $OpenPath) { $OpenPath = Split-Path $OpenPath -Parent } 
+        # explorer.exe $OpenPath
+    }
+    return $Output
 } # archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit"
 # archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\doc-HEAD" -Expand
 # archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip" -Expand
 # archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit"
 # archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip"
 # 空Comit測試
-# archiveCommit "" css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip"
-# archiveCommit "" css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit"
-# archiveCommit "" css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc"
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip"
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit"
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc"
 # Expand測試
-# archiveCommit "" css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc"
-# archiveCommit "" css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"archiveCommit"
-# archiveCommit "" css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"archiveCommit.zip"
-# archiveCommit "" css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit"
-# archiveCommit "" css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\doc" -Expand
-# archiveCommit "" css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip"
-# archiveCommit "" css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip" -Expand
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc"
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"archiveCommit"
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"archiveCommit.zip"
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit"
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\doc" -Expand
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip"
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip" -Expand
+# 暫存測試
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutputToTemp
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutputToTemp -Expand
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutputToTemp -Expand -ConvertToSystemEncoding
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutputToTemp -Expand -ConvertToUTF8
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutputToTemp -Expand -ConvertToUTF8BOM
 # 例外測試
 # archiveCommit HEAD -Output:(Get-Location) -Expand
 # archiveCommit HEAD *.css -Path:"Z:\doc" -Output:"Z:\doc" -Expand
