@@ -327,7 +327,10 @@ function archiveDiffCommit {
     # 檢測路徑
     [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
     if ($Path) { $Path = [System.IO.Path]::GetFullPath($Path) } else { $Path = Get-Location}
-    if ($Output) { $Output = [System.IO.Path]::GetFullPath($Output) } else { $Output = "$Env:TEMP\archiveDiffCommit"}
+    if ($Output) { $Output = [System.IO.Path]::GetFullPath($Output) } else {
+        $Output = "$Env:TEMP\archiveDiffCommit"
+        if (Test-Path "$Env:TEMP\archiveDiffCommit\*") { Remove-Item "$Env:TEMP\archiveDiffCommit\*" -Recurse }
+    }
     if (!(Test-Path -PathType:Container "$Path\.git")) { Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction:Stop }
     # if (!$Commit1) { $Commit1 = 'HEAD' }
     if ( $Commit1 -and !$Commit2) { $Commit2 = "$Commit1"; $Commit1 = "$Commit1^" }
