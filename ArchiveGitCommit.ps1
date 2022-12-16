@@ -72,7 +72,7 @@ function archiveCommit {
         [string] $Output, # 預設為 "$gitDirName-$Commit.zip"
                           #   A. Output為Zip: 保持手動"$Output.zip"
                           #   B. Output為Dir: 檔名自動"$Output\$gitDirName-$Commit.zip"
-        [switch] $OutputToTemp,
+        [switch] $OutputFileToTemp,
         [Parameter(ParameterSetName = "")] # 只有當Output為資料夾且Expand有啟用才有作用
         [switch] $ConvertToSystemEncoding,
         [switch] $ConvertToUTF8,
@@ -95,8 +95,9 @@ function archiveCommit {
     $Path = $Path -replace("^Microsoft.PowerShell.Core\\FileSystem::")
     if (!(Test-Path -PathType:Container "$Path\.git")) { Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction:Stop }
     # 輸出到暫存
-    if ($OutputToTemp) {
+    if ($OutputFileToTemp) {
         $Output = "$env:TEMP\ArchiveOutFile"
+        $Expand = $true
         if (Test-Path "$env:TEMP\ArchiveOutFile\*") { Remove-Item "$env:TEMP\ArchiveOutFile\*" -Recurse }
     }
     
@@ -193,7 +194,7 @@ function archiveCommit {
         }
         
     # 從git倉庫獲取檔案壓縮包
-    } else {
+    } elseif (!$CommitIsNull) {
         # 打包差異的檔案
         $cmd = ("git archive -o '$Output' $Commit $List").Trim()
         if ($cmd) {
@@ -212,10 +213,10 @@ function archiveCommit {
                 $ExpPath = [System.IO.Path]::GetFullPath($ExpPath)
                 if (!(Test-Path $ExpPath)) { New-Item $ExpPath -ItemType:Directory -Force |Out-Null } # 不存在則創建
                 if ($ExpPath -eq $Path) { $Output=$null; Write-Error "The `$Output location is the same as the Git directory." } else { # 禁止複製到Git資料夾覆蓋
-                    if ((Test-Path $ExpPath) -and (Get-ChildItem $ExpPath)) { # 禁止複製到非空目錄造成覆蓋
-                        Write-Warning "Output directory is not an empty directory, the output may be overwrite with other files."
+                    $FileList = (Get-ChildItem $ExpPath -Exclude (Split-Path $Output -Leaf))
+                    if ((Test-Path $ExpPath) -and $FileList) { # 禁止複製到非空目錄造成覆蓋
+                        Write-Warning "Output directory `"$ExpPath`" is not an empty directory, the output may be overwrite with other files."
                         if ((Split-Path $Output -Leaf) -eq "archiveCommit-temp.zip") { Remove-Item $Output } # 多餘的if判斷避免砍錯檔案
-                        return
                     } else {
                         Expand-Archive $Output $ExpPath
                         if ((Split-Path $Output -Leaf) -eq "archiveCommit-temp.zip") { Remove-Item $Output } # 多餘的if判斷避免砍錯檔案
@@ -266,11 +267,11 @@ function archiveCommit {
     }
     
     # 輸出到暫存資料夾
-    if ($OutputToTemp) {
+    if ($OutputFileToTemp) {
         # 打開輸出到暫存的資料夾或Zip資料夾
         $OpenPath = $Output
         if (Test-Path -PathType:Leaf $OpenPath) { $OpenPath = Split-Path $OpenPath -Parent } 
-        # explorer.exe $OpenPath
+        explorer.exe $OpenPath
     }
     return $Output
 } # archiveCommit HEAD @("*.css") -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit"
@@ -291,11 +292,11 @@ function archiveCommit {
 # archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip"
 # archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip" -Expand
 # 暫存測試
-# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutputToTemp
-# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutputToTemp -Expand
-# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutputToTemp -Expand -ConvertToSystemEncoding
-# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutputToTemp -Expand -ConvertToUTF8
-# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutputToTemp -Expand -ConvertToUTF8BOM
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutputFileToTemp
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutputFileToTemp -Expand
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutputFileToTemp -Expand -ConvertToSystemEncoding
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutputFileToTemp -Expand -ConvertToUTF8
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutputFileToTemp -Expand -ConvertToUTF8BOM
 # 例外測試
 # archiveCommit HEAD -Output:(Get-Location) -Expand
 # archiveCommit HEAD *.css -Path:"Z:\doc" -Output:"Z:\doc" -Expand
@@ -306,6 +307,7 @@ function archiveCommit {
 # archiveCommit -Path:"Z:\doc" -Output:"Z:\doc.zip" -Expand
 # 空節點與結合測試
 # archiveCommit -Path:"Z:\doc" -Output:"Z:\Archives" -List:((diffCommit -Path "Z:\doc").Name)
+# archiveCommit -List ((diffCommit INIT).Name) -OutputFileToTemp -ConvertToSystemEncoding
 
 
 # archiveDiffCommit 別名
