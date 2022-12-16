@@ -320,13 +320,14 @@ function archiveDiffCommit {
         [Parameter(Position = 1, ParameterSetName = "")]
         [string] $Commit2,
         [Parameter(ParameterSetName = "")]
-        [string] $Path
+        [string] $Path,
+        [Parameter(ParameterSetName = "")]
+        [string] $Output
     )
     # 檢測路徑
-    if ($Path) {
-        [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
-        $Path = [System.IO.Path]::GetFullPath($Path)
-    } else { $Path = Get-Location}
+    [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
+    if ($Path) { $Path = [System.IO.Path]::GetFullPath($Path) } else { $Path = Get-Location}
+    if ($Output) { $Output = [System.IO.Path]::GetFullPath($Output) } else { $Output = Get-Location}
     if (!(Test-Path -PathType:Container "$Path\.git")) { Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction:Stop }
     # if (!$Commit1) { $Commit1 = 'HEAD' }
     if ( $Commit1 -and !$Commit2) { $Commit2 = "$Commit1"; $Commit1 = "$Commit1^" }
@@ -345,8 +346,9 @@ function archiveDiffCommit {
     $List2 = diffCommit $Commit1 $Commit2 -Path $Path
     $List2 = ($List2|Where-Object{$_.Status -notin "D"})
     # 獲取 節點 差異檔案 (變更後)
-    if ($List1) {$Out1 = archiveCommit -Path:$Path -List:($List1.Name) -Output "$Env:TEMP\archiveDiffCommit" $Commit1}
-    if ($List2) {$Out2 = archiveCommit -Path:$Path -List:($List2.Name) -Output "$Env:TEMP\archiveDiffCommit" $Commit2}
+    $archivePath = "$Env:TEMP\archiveDiffCommit"; if ($Output) { $archivePath = $Output }
+    if ($List1) {$Out1 = archiveCommit -Path:$Path -List:($List1.Name) -Output $archivePath $Commit1}
+    if ($List2) {$Out2 = archiveCommit -Path:$Path -List:($List2.Name) -Output $archivePath $Commit2}
     
     # Zip的定義中沒辦法存在空zip，遇到List1為空做一個空檔案比較
     if (!$List1) {
