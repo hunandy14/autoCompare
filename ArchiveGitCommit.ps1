@@ -322,7 +322,9 @@ function archiveDiffCommit {
         [Parameter(ParameterSetName = "")]
         [string] $Path,
         [Parameter(ParameterSetName = "")]
-        [string] $Output
+        [string] $Output,
+        [Parameter(ParameterSetName = "")]
+        [switch] $OpenOutDir
     )
     # 檢測路徑
     [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
@@ -351,18 +353,21 @@ function archiveDiffCommit {
     # 獲取 節點 差異檔案 (變更後)
     if ($List1) {$Out1 = archiveCommit -Path:$Path -List:($List1.Name) -Output $Output $Commit1}
     if ($List2) {$Out2 = archiveCommit -Path:$Path -List:($List2.Name) -Output $Output $Commit2}
+    ($List2|Out-String).trim("`r`n|`n") > "$Output\diff-list.txt"
     
     # Zip的定義中沒辦法存在空zip，遇到List1為空做一個空檔案比較
     if (!$List1) {
+        if ($Commit1) { $ZipCmt = $Commit1 } else { $ZipCmt = "CURR" }
         $emptyFile = "$Env:TEMP\_"
-        $emptyZip = "$Env:TEMP\archiveDiffCommit\$($Commit1)_CommitIsNonDiffFile.zip"
+        $emptyZip = "$Env:TEMP\archiveDiffCommit\$($ZipCmt)_CommitIsNonDiffFile.zip"
         if (!(Test-Path $emptyFile)) { New-Item $emptyFile -ItemType:File|Out-Null }
         Compress-Archive $emptyFile $emptyZip -Force
         $Out1=$emptyZip
     }
     if (!$List2) {
+        if ($Commit2) { $ZipCmt = $Commit2 } else { $ZipCmt = "CURR" }
         $emptyFile = "$Env:TEMP\_"
-        $emptyZip = "$Env:TEMP\archiveDiffCommit\$($Commit2)_CommitIsNonDiffFile.zip"
+        $emptyZip = "$Env:TEMP\archiveDiffCommit\$($ZipCmt)_CommitIsNonDiffFile.zip"
         if (!(Test-Path $emptyFile)) { New-Item $emptyFile -ItemType:File|Out-Null }
         Compress-Archive $emptyFile $emptyZip -Force
         $Out2=$emptyZip
@@ -379,6 +384,9 @@ function archiveDiffCommit {
         Commit   = $Commit2
         FullName = $Out2
     }
+    # 打開輸出資料夾
+    if ($OpenOutDir) { explorer.exe $Output }
+    # 回傳完整路徑
     return $Obj
 }
 # 輸出 [HEAD -> CURR] 差異檔案
@@ -393,8 +401,8 @@ function archiveDiffCommit {
 # archiveDiffCommit INIT0 HEAD -Path:"Z:\doc"
 # 空節點測試
 # archiveDiffCommit -Path:"Z:\doc" -Include EAWD1100.css,EAWD1100.js
-
-# 
+# OpenOutDir
+# archiveDiffCommit -Path:"Z:\doc" -OpenOutDir
 # 比較git節點
 # Invoke-RestMethod "raw.githubusercontent.com/hunandy14/autoCompare/master/DiffSource.ps1"|Invoke-Expression
 # acvDC INIT0 HEAD -Path:"Z:\doc"|cmpSrc
