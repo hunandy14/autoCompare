@@ -308,7 +308,8 @@ function archiveCommit {
 # 空節點與結合測試
 # archiveCommit -Path:"Z:\doc" -Output:"Z:\Archives" -List:((diffCommit -Path "Z:\doc").Name)
 # archiveCommit -List ((diffCommit INIT).Name) -OutputFileToTemp -ConvertToSystemEncoding
-
+# 輸出節點所有檔案
+# archiveCommit -List $null -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\doc" -Expand
 
 # archiveDiffCommit 別名
 Set-Alias acvDC archiveDiffCommit
@@ -324,7 +325,9 @@ function archiveDiffCommit {
         [Parameter(ParameterSetName = "")]
         [string] $Output,
         [Parameter(ParameterSetName = "")]
-        [switch] $OpenOutDir
+        [switch] $OpenOutDir,
+        [Parameter(ParameterSetName = "")]
+        [switch] $OutAllFile
     )
     # 檢測路徑
     [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
@@ -350,27 +353,35 @@ function archiveDiffCommit {
     # 獲取 節點2 差異清單 (變更後)
     $List2 = diffCommit $Commit1 $Commit2 -Path $Path
     $List2 = ($List2|Where-Object{$_.Status -notin "D"})
-    # 獲取 節點 差異檔案 (變更後)
-    if ($List1) {$Out1 = archiveCommit -Path:$Path -List:($List1.Name) -Output $Output $Commit1}
-    if ($List2) {$Out2 = archiveCommit -Path:$Path -List:($List2.Name) -Output $Output $Commit2}
+    # 輸出 差異清單表
     ($List2|Out-String).trim("`r`n|`n") > "$Output\diff-list.txt"
     
-    # Zip的定義中沒辦法存在空zip，遇到List1為空做一個空檔案比較
-    if (!$List1) {
-        if ($Commit1) { $ZipCmt = $Commit1 } else { $ZipCmt = "CURR" }
-        $emptyFile = "$Env:TEMP\_"
-        $emptyZip = "$Env:TEMP\archiveDiffCommit\$($ZipCmt)_CommitIsNonDiffFile.zip"
-        if (!(Test-Path $emptyFile)) { New-Item $emptyFile -ItemType:File|Out-Null }
-        Compress-Archive $emptyFile $emptyZip -Force
-        $Out1=$emptyZip
-    }
-    if (!$List2) {
-        if ($Commit2) { $ZipCmt = $Commit2 } else { $ZipCmt = "CURR" }
-        $emptyFile = "$Env:TEMP\_"
-        $emptyZip = "$Env:TEMP\archiveDiffCommit\$($ZipCmt)_CommitIsNonDiffFile.zip"
-        if (!(Test-Path $emptyFile)) { New-Item $emptyFile -ItemType:File|Out-Null }
-        Compress-Archive $emptyFile $emptyZip -Force
-        $Out2=$emptyZip
+    # 獲取 節點 差異檔案 (變更後)
+    if ($OutAllFile) { 
+        # 輸出所有檔案
+        $Out1 = archiveCommit -Path:$Path -Output $Output $Commit1
+        $Out2 = archiveCommit -Path:$Path -Output $Output $Commit2
+    } else {
+        # 獲取差異清單檔案
+        if ($List1) {$Out1 = archiveCommit -Path:$Path -List:($List1.Name) -Output $Output $Commit1}
+        if ($List2) {$Out2 = archiveCommit -Path:$Path -List:($List2.Name) -Output $Output $Commit2}
+        # Zip的定義中沒辦法存在空zip，遇到List1為空做一個空檔案比較
+        if (!$List1) {
+            if ($Commit1) { $ZipCmt = $Commit1 } else { $ZipCmt = "CURR" }
+            $emptyFile = "$Env:TEMP\_"
+            $emptyZip = "$Env:TEMP\archiveDiffCommit\$($ZipCmt)_CommitIsNonDiffFile.zip"
+            if (!(Test-Path $emptyFile)) { New-Item $emptyFile -ItemType:File|Out-Null }
+            Compress-Archive $emptyFile $emptyZip -Force
+            $Out1=$emptyZip
+        }
+        if (!$List2) {
+            if ($Commit2) { $ZipCmt = $Commit2 } else { $ZipCmt = "CURR" }
+            $emptyFile = "$Env:TEMP\_"
+            $emptyZip = "$Env:TEMP\archiveDiffCommit\$($ZipCmt)_CommitIsNonDiffFile.zip"
+            if (!(Test-Path $emptyFile)) { New-Item $emptyFile -ItemType:File|Out-Null }
+            Compress-Archive $emptyFile $emptyZip -Force
+            $Out2=$emptyZip
+        }
     }
     
     # 輸出物件
@@ -403,10 +414,11 @@ function archiveDiffCommit {
 # archiveDiffCommit -Path:"Z:\doc" -Include EAWD1100.css,EAWD1100.js
 # OpenOutDir
 # archiveDiffCommit -Path:"Z:\doc" -OpenOutDir
+# 輸出所有檔案測試
+# archiveDiffCommit -Path:"Z:\doc" -OpenOutDir -OutAllFile
 # 比較git節點
 # Invoke-RestMethod "raw.githubusercontent.com/hunandy14/autoCompare/master/DiffSource.ps1"|Invoke-Expression
 # acvDC INIT0 HEAD -Path:"Z:\doc"|cmpSrc
 # acvDC HEAD -Path:"Z:\doc" |cmpSrc
-# acvDC -Path:"Z:\doc" |cmpSrc
-# (acvDC -Path:"Z:\doc")|cmpSrc
 # acvDC -Path:"Z:\doc"|cmpSrc
+# acvDC -Path:"Z:\doc" -OutAllFile |cmpSrc
