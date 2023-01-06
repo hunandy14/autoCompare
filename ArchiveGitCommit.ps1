@@ -353,8 +353,6 @@ function archiveDiffCommit {
     # 獲取 節點2 差異清單 (變更後)
     $List2 = diffCommit $Commit1 $Commit2 -Path $Path
     $List2 = ($List2|Where-Object{$_.Status -notin "D"})
-    # 輸出 差異清單表
-    ($List2|Out-String).trim("`r`n|`n") > "$Output\diff-list.txt"
     
     # 獲取 節點 差異檔案 (變更後)
     if ($OutAllFile) { 
@@ -384,6 +382,8 @@ function archiveDiffCommit {
         }
     }
     
+    # 輸出 差異清單表
+    ($List2|Out-String).trim("`r`n|`n") > "$Output\diff-list.txt"
     # 輸出物件
     if ($Commit1 -and !$Commit2) { $Commit2 = "CURR"}
     $Obj = @()
