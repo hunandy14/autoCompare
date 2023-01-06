@@ -59,10 +59,11 @@ irm bit.ly/DiffGitSource|iex;
 
 # 比較尚未儲存的變更 [HEAD -> CURR] (新增的檔案如果沒有Stage則不會被列入)
 irm bit.ly/DiffGitSource|iex; acvDC|cmpSrc
-
 # 比較 [HEAD^ -> HEAD] 的變更
 irm bit.ly/DiffGitSource|iex; acvDC HEAD|cmpSrc
-
 # 比較 [INIT -> HEAD] 的變更
 irm bit.ly/DiffGitSource|iex; acvDC INIT HEAD|cmpSrc
+
+# 比較節點的變更且輸出所有檔案
+irm bit.ly/DiffGitSource|iex; acvDC -OutAllFile|cmpSrc
 ```
