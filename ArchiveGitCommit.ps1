@@ -202,8 +202,8 @@ function archiveCommit {
             if ($Path) { $curDir = (Get-Location).Path; Set-location $Path }
             $dstDir = (Split-Path $Output -Parent)
             if (!(Test-Path $dstDir)) { New-Item -ItemType Directory $dstDir  -Force | Out-Null }
+            Write-Host $cmd
             Invoke-Expression $cmd
-            # Write-Host $cmd -ForegroundColor:Yellow
             if ($Path) { Set-location $curDir }
         }
         # 解壓縮並刪除檔案
@@ -418,6 +418,7 @@ function archiveDiffCommit {
 # archiveDiffCommit -Path:"Z:\doc" -OpenOutDir -OutAllFile
 # 比較git節點
 # Invoke-RestMethod "raw.githubusercontent.com/hunandy14/autoCompare/master/DiffSource.ps1"|Invoke-Expression
+# acvDC INIT0 HEAD -Path:"Z:\doc"
 # acvDC INIT0 HEAD -Path:"Z:\doc"|cmpSrc
 # acvDC HEAD -Path:"Z:\doc" |cmpSrc
 # acvDC -Path:"Z:\doc"|cmpSrc
