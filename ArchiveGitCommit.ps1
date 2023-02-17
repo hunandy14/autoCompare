@@ -146,7 +146,7 @@ function archiveCommit {
             }
         } else { # 複製到暫存路徑
             $CopyTemp = "$env:TEMP\archiveCommitTemp"
-            if (Test-Path "$env:TEMP\archiveCommitTemp\*") { Remove-Item "$env:TEMP\archiveCommitTemp\*" -Recurse }
+            if (Test-Path "$env:TEMP\archiveCommitTemp\*") { Remove-Item "$env:TEMP\archiveCommitTemp\*" -Recurse -Force }
         }
         # 獲取檔案清單
         if ($List) {
