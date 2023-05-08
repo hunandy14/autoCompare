@@ -58,7 +58,7 @@ function diffCommit {
     }
     return $List
 } # diffCommit INIT HEAD -Path "Z:\doc" -Filter "ADMR"
-
+#  diffCommit -Path "Z:\doc"
 
 
 # 從指定提交點取出特定清單檔案
@@ -72,7 +72,7 @@ function archiveCommit {
         [string] $Output, # 預設為 "$gitDirName-$Commit.zip"
                           #   A. Output為Zip: 保持手動"$Output.zip"
                           #   B. Output為Dir: 檔名自動"$Output\$gitDirName-$Commit.zip"
-        [switch] $OutputFileToTemp,
+        [switch] $OutToTemp,
         [Parameter(ParameterSetName = "")] # 只有當Output為資料夾且Expand有啟用才有作用
         [switch] $ConvertToSystemEncoding,
         [switch] $ConvertToUTF8,
@@ -95,7 +95,7 @@ function archiveCommit {
     $Path = $Path -replace("^Microsoft.PowerShell.Core\\FileSystem::")
     if (!(Test-Path -PathType:Container "$Path\.git")) { Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction:Stop }
     # 輸出到暫存
-    if ($OutputFileToTemp) {
+    if ($OutToTemp) {
         $Output = "$env:TEMP\ArchiveOutFile\ReleaseSrc"
         $Expand = $true
         if (Test-Path "$env:TEMP\ArchiveOutFile\ReleaseSrc\*") { Remove-Item "$env:TEMP\ArchiveOutFile\ReleaseSrc\*" -Recurse }
@@ -155,9 +155,17 @@ function archiveCommit {
                 $obj = [IO.Path]::GetFullPath([IO.Path]::Combine($Path, $_))
                 $FileInfo += Get-Item $obj
             }
-        } else { # 沒給List全輸出
-            $FileInfo = (Get-ChildItem -Path:$Path -Recurse -File)
-            $FileInfo = $FileInfo|Where-Object{$_.FullName -notmatch ".git\*"}
+        } else {
+            # 沒提交點也沒給List:: 全輸出
+            # $FileInfo = (Get-ChildItem -Path:$Path -Recurse -File)
+            # $FileInfo = $FileInfo|Where-Object{$_.FullName -notmatch ".git\*"}
+            # 輸出當前狀況
+            $FileInfo = @()
+            $List = (diffCommit -Path $Path).Name
+            $List|ForEach-Object{
+                $obj = [IO.Path]::GetFullPath([IO.Path]::Combine($Path, $_))
+                $FileInfo += Get-Item $obj
+            }
         }
         # 複製差異檔案到暫存目錄
         $curDir_tmp = Get-Location
@@ -267,7 +275,7 @@ function archiveCommit {
     }
     
     # 輸出到暫存資料夾
-    if ($OutputFileToTemp) {
+    if ($OutToTemp) {
         # 打開輸出到暫存的資料夾或Zip資料夾
         $OpenPath = $Output
         if (Test-Path -PathType:Leaf $OpenPath) { $OpenPath = Split-Path $OpenPath -Parent } 
@@ -292,11 +300,11 @@ function archiveCommit {
 # archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip"
 # archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\Archive.zip" -Expand
 # 暫存測試
-# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutputFileToTemp
-# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutputFileToTemp -Expand
-# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutputFileToTemp -Expand -ConvertToSystemEncoding
-# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutputFileToTemp -Expand -ConvertToUTF8
-# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutputFileToTemp -Expand -ConvertToUTF8BOM
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutToTemp
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutToTemp -Expand
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutToTemp -Expand -ConvertToSystemEncoding
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutToTemp -Expand -ConvertToUTF8
+# archiveCommit -List css\EAWD1100.css,js\EAWD1100.js -Path:"Z:\doc" -OutToTemp -Expand -ConvertToUTF8BOM
 # 例外測試
 # archiveCommit HEAD -Output:(Get-Location) -Expand
 # archiveCommit HEAD *.css -Path:"Z:\doc" -Output:"Z:\doc" -Expand
@@ -307,9 +315,11 @@ function archiveCommit {
 # archiveCommit -Path:"Z:\doc" -Output:"Z:\doc.zip" -Expand
 # 空節點與結合測試
 # archiveCommit -Path:"Z:\doc" -Output:"Z:\Archives" -List:((diffCommit -Path "Z:\doc").Name)
-# archiveCommit -List ((diffCommit INIT).Name) -OutputFileToTemp -ConvertToSystemEncoding
+# archiveCommit -List ((diffCommit INIT).Name) -OutToTemp -ConvertToSystemEncoding
 # 輸出節點所有檔案
 # archiveCommit -List $null -Path:"Z:\doc" -Output:"$env:TEMP\archiveCommit\doc" -Expand
+# 無提交點與清單自動獲取當前狀態
+# archiveCommit -Path "Z:\doc" -Output:"$env:TEMP\archiveCommit\doc" -Expand
 
 # archiveDiffCommit 別名
 Set-Alias acvDC archiveDiffCommit
