@@ -78,7 +78,7 @@ function diffCommit {
         $item1 = ($content1[$i] -split("\t"))
         $item2 = ($content2[$i] -split("\t"))
         # # 取出字段
-        $Status, $Name     = $item1[0], $item1[1]|DecodeOctal
+        $Status, $Name     = $item1[0], (DecodeOctal $item1[1])
         $StepAdd, $StepDel = $item2[0], $item2[1]
         # 特殊狀況改名時
         if ($Status -match '^R') {
@@ -100,7 +100,7 @@ function diffCommit {
         for ($i = 0; $i -lt $content3.Count; $i++) {
             $item1 = ($content3[$i] -split("\t"))
             # # 取出字段
-            $Status, $Name = $item1[0], $item1[1]|DecodeOctal
+            $Status, $Name = $item1[0], (DecodeOctal $item1[1])
             # 轉換物件
             $PsObj += [PSCustomObject]@{
                 Status  = $Status
@@ -118,6 +118,7 @@ function diffCommit {
 # diffCommit -Path "Z:\doc" -Cached     # [HEAD  -> Stage]  :: 已暫存的變更
 # diffCommit -Path "Z:\doc"             # [Stage -> WorkDir]:: 未暫存的變更
 # (diffCommit -Path "Z:\doc" HEAD^^ HEAD^) |Select-Object * |Format-Table
+
 
 
 # 從指定提交點取出特定清單檔案
@@ -475,7 +476,7 @@ function archiveDiffCommit {
     
     
     # 輸出 差異清單表
-    $OutString = ($OutList | ForEach-Object { $index = 1 } {
+    $OutString = ($OutList | ForEach-Object { $index; $index=1} {
         $_ | Select-Object @{Name='Index'; Expression={[string]$index}},*
         $index++
     } |Format-Table |Out-String) -split "`r`n" -notmatch "^$"
