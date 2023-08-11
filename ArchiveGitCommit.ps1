@@ -59,7 +59,7 @@ function diffCommit {
             # $Status = 'R'
             $OldName = $Name
             $Name    = $item1[2]
-        }
+        } else { $OldName = $null }
         # 轉換物件
         $PsObj += [PSCustomObject]@{
             Status  = $Status
@@ -85,13 +85,13 @@ function diffCommit {
             } | Add-Member MemberSet PSStandardMembers $PSStandardMembers -PassThru
         }
     }
-    return $PsObj
+    return $PsObj|Sort-Object Name
 } # diffCommit INIT HEAD -Path "Z:\doc" -Filter "ADMR"
 # diffCommit -Path "Z:\doc" -Tracked
 # diffCommit -Path "Z:\doc" HEAD        # [HEAD  -> WorkDir]:: 未提交的變更
 # diffCommit -Path "Z:\doc" -Cached     # [HEAD  -> Stage]  :: 已暫存的變更
 # diffCommit -Path "Z:\doc"             # [Stage -> WorkDir]:: 未暫存的變更
-
+# (diffCommit -Path "Z:\doc" HEAD^^ HEAD^) |Select-Object * |Format-Table
 
 
 # 從指定提交點取出特定清單檔案
@@ -243,9 +243,10 @@ function archiveCommit {
             if ($Path) { $curDir = (Get-Location).Path; Set-location $Path }
             $dstDir = (Split-Path $Output -Parent)
             if (!(Test-Path $dstDir)) { New-Item -ItemType Directory $dstDir  -Force | Out-Null }
-            Write-Host $cmd
+            # Write-Host $cmd -ForegroundColor DarkGray
             Invoke-Expression $cmd
             if ($Path) { Set-location $curDir }
+            if ($LASTEXITCODE -ne 0) { Write-Error "Git Command failed with exit code: $LASTEXITCODE" -ErrorAction Stop }
         }
         # 解壓縮並刪除檔案
         if ($Expand) {
@@ -354,10 +355,9 @@ function archiveCommit {
 # 無提交點與清單自動獲取當前狀態
 # archiveCommit -Path "Z:\doc" -Output:"$env:TEMP\archiveCommit\doc" -Expand
 
-# archiveDiffCommit 別名
-Set-Alias acvDC archiveDiffCommit
 # 封存 Git差異節點 間的變動檔案
 function archiveDiffCommit {
+    [Alias("acvDC")]
     param (
         [Parameter(Position = 0, ParameterSetName = "")]
         [string] $Commit1,
@@ -383,19 +383,41 @@ function archiveDiffCommit {
     # if (!$Commit1) { $Commit1 = 'HEAD' }
     if ( $Commit1 -and !$Commit2) { $Commit2 = "$Commit1"; $Commit1 = "$Commit1^" }
     if (!$Commit1 -and !$Commit2) { $Commit1 = "HEAD"; $IsCurrStatusDiff=$true}
-    # Write-Host $Commit1 -> $Commit2
+    # 輸出比較節點名稱
+    $CommitName1 = $Commit1
+    $CommitName2 = if ($Commit2) {$Commit2} else {'CURR'}
+    Write-Host "Diff Commit:: [$CommitName1 -> $CommitName2]"
+    
+    
     
     # 獲取 節點1 差異清單 (變更前)
-    $List1 = diffCommit $Commit2 $Commit1 -Path $Path
-    if ($IsCurrStatusDiff) {
-        # 因為git的省參數狀態只能比較[HEAD->CURR]不能比較[CURR->HEAD]，直觀的解法把A跟D反過來就好
-        $List1 = ($List1|Where-Object{$_.Status -notin "A"})
-    } else {
-        $List1 = ($List1|Where-Object{$_.Status -notin "D"})
+    $List1Cmd = "diffCommit $Commit2 $Commit1 -Path $Path"
+    # Write-Host $List1Cmd -ForegroundColor DarkGray
+    $List1 = Invoke-Expression $List1Cmd; if ($List1) {
+        if ($IsCurrStatusDiff) {
+            # 因為git的省參數狀態只能比較[HEAD->CURR]不能比較[CURR->HEAD]，直觀的解法把A跟D反過來就好
+            $List1 = ($List1|Where-Object{$_.Status -notin "A" -and $_.Status -notin "U"}) # 去除AU
+            # 處理更名物件拆成AD並刪除A
+            $List1|ForEach-Object{
+                if (($_.Status)[0] -eq "R") {
+                    $_.Name = $_.OldName
+                    $_.OldName = $null
+                    $_.Status = "D"
+                }
+            }
+        } else {
+            $List1 = ($List1|Where-Object{$_.Status -notin "D"})
+        }
     }
     # 獲取 節點2 差異清單 (變更後)
-    $List2 = diffCommit $Commit1 $Commit2 -Path $Path
-    $List2 = ($List2|Where-Object{$_.Status -notin "D"})
+    $List2Cmd = "diffCommit $Commit1 $Commit2 -Path $Path"
+    # Write-Host $List2Cmd -ForegroundColor DarkGray
+    $OutList = Invoke-Expression $List2Cmd; if ($OutList) {
+        # 排除已經被刪除的清單
+        $List2 = ($OutList|Where-Object{$_.Status -notin "D"})
+    }
+    
+    
     
     # 獲取 節點 差異檔案 (變更後)
     if ($OutAllFile) { 
@@ -425,8 +447,16 @@ function archiveDiffCommit {
         }
     }
     
+    
     # 輸出 差異清單表
-    ($List2|Out-String).trim("`r`n|`n") > "$Output\diff-list.txt"
+    $OutString = (($OutList|Select-Object *|Format-Table|Out-String) -split "`r`n") -notmatch "^$"
+    $OutString > "$Output\diff-list.txt"
+    Write-Host ''
+    Write-Host ($OutString[0..1] -join "`r`n") -ForegroundColor DarkGray
+    Write-Host ($OutString[2..($OutString.Length-1)] -join "`r`n")
+    Write-Host ''
+    
+    
     # 輸出物件
     if ($Commit1 -and !$Commit2) { $Commit2 = "CURR"}
     $Obj = @()
@@ -461,8 +491,12 @@ function archiveDiffCommit {
 # archiveDiffCommit -Path:"Z:\doc" -OpenOutDir -OutAllFile
 # 比較git節點
 # Invoke-RestMethod "raw.githubusercontent.com/hunandy14/autoCompare/master/DiffSource.ps1"|Invoke-Expression
+# . ".\DiffSource.ps1"
+# acvDC 'HEAD^' 'HEAD' -Path:"Z:\doc"
+# acvDC 'HEAD^^' 'HEAD' -Path:"Z:\doc" |cmpSrc
 # acvDC INIT0 HEAD -Path:"Z:\doc"
 # acvDC INIT0 HEAD -Path:"Z:\doc"|cmpSrc
 # acvDC HEAD -Path:"Z:\doc" |cmpSrc
-# acvDC -Path:"Z:\doc"|cmpSrc
+# acvDC -Path:"Z:\doc"
+# acvDC -Path:"Z:\doc" |cmpSrc
 # acvDC -Path:"Z:\doc" -OutAllFile |cmpSrc

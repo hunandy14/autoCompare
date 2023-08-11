@@ -40,10 +40,9 @@ function Install-WinMerge {
 
 
 
-# DiffSource 別名
-Set-Alias cmpSrc DiffSource
 # 比較程式碼差異
 function DiffSource {
+    [Alias("cmpSrc")]
     param (
         [Parameter(Position = 0, ParameterSetName = "A", Mandatory)]
         [String] $LeftPath,
@@ -124,10 +123,10 @@ $ArgumentList = @"
     if ($IgnoreWhite){ $ArgumentList += "-ignorews"; $ArgumentList += "-ignoreblanklines"; $ArgumentList += "-ignoreeol" }
     $ArgumentList = $ArgumentList -replace("^ +") -join(" ")
     # 開始比較
-    Write-Output "WinMergeU $ArgumentList"
+    Write-Host "WinMergeU $ArgumentList" -ForegroundColor DarkGray
     Start-Process WinMergeU $ArgumentList -Wait
     if (!$NoOpenHTML) { explorer.exe $Output }
-    return "ReportPath: $Output"
+    return $Output
 }} # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html'
 # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -NoOpenHTML -IgnoreSameFile -IgnoreWhite
 # DiffSource 'Z:\Work\INIT.zip' 'Z:\Work\master.zip' -Output 'Z:\Work\Diff\index.html' -CompareZipSecondLayer
