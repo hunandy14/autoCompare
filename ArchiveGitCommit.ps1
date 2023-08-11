@@ -449,7 +449,10 @@ function archiveDiffCommit {
     
     
     # 輸出 差異清單表
-    $OutString = (($OutList|Select-Object *|Format-Table|Out-String) -split "`r`n") -notmatch "^$"
+    $OutString = ($OutList | ForEach-Object { $index = 1 } {
+        $_ | Select-Object @{Name='Index'; Expression={[string]$index}},*
+        $index++
+    } |Format-Table |Out-String) -split "`r`n" -notmatch "^$"
     $OutString > "$Output\diff-list.txt"
     Write-Host ''
     Write-Host ($OutString[0..1] -join "`r`n") -ForegroundColor DarkGray
