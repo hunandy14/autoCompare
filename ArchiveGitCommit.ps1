@@ -2,14 +2,17 @@
 function diffCommit {
     param (
         [Parameter(Position = 0, ParameterSetName = "")]
-        [string] $Commit1,
+        [string] $Commit1, # Commit 兩者皆未輸入時輸出 [暫存 -> 當前工作目錄] 的變更
         [Parameter(Position = 1, ParameterSetName = "")]
-        [string] $Commit2,
+        [string] $Commit2, # Commit2 未輸入時輸出 [Commit1 -> 當前工作目錄] 的變更
+        [switch] $Cached,  # 剔除未提交檔案 (也可以解釋成將 Commit2 設置成 Stage [Commit2 必須為空])
+        [switch] $Tracked, # 剔除未追蹤的清單 (git diff 是不包含未追蹤檔案的我修改了這個特性改成預設是有的 [只有在 Commit2 與 Cached 為空時才有效])
         [Parameter(ParameterSetName = "")]
         [string] $Path,
         [Parameter(ParameterSetName = "")]
         [string] $Filter
     )
+    
     # 檢測路徑
     if ($Path) {
         [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
@@ -18,47 +21,77 @@ function diffCommit {
     } else { $Path = Get-Location}
     $Path = $Path -replace("^Microsoft.PowerShell.Core\\FileSystem::")
     if (!(Test-Path -PathType:Container "$Path\.git")) { Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction:Stop }
+    
+    
+    
     # 命令
-    if ($Filter) { $Filter = " --diff-filter=$Filter" }
-    $cmd1 = "git diff --name-status$Filter $Commit1 $Commit2".Trim()
-    $cmd2 = "git diff --numstat$Filter $Commit1 $Commit2".Trim()
+    $Filter = $Stage = $null
+    if ($Filter) { $Filter = "--diff-filter=$Filter" }
+    if ($Cached -and !$Commit2) { $Stage = "--cached" }
+    $cmd1 = "git diff --name-status $Filter $Stage $Commit1 $Commit2".TrimEnd() -replace "\s{2,}", " "
+    $cmd2 = "git diff --numstat $Filter $Stage $Commit1 $Commit2".TrimEnd() -replace "\s{2,}", " "
+    $cmd3 = "(git ls-files --others --exclude-standard) -replace('^', `"U`t`")"
+    
     # 提取差分清單
     if ($Path) { $curDir = (Get-Location).Path; Set-location $Path }
     $content1 = @(Invoke-Expression $cmd1)
     $content2 = @(Invoke-Expression $cmd2)
-    # Write-Host $cmd1 -ForegroundColor:Yellow
-    # Write-Host $cmd2 -ForegroundColor:Yellow
+    $content3 = @(Invoke-Expression $cmd3)
     if ($Path) { Set-location $curDir }
+    
+    
+    
+    # 自訂顯示屬性
+    $displayProperties = 'Status', 'Name', 'StepAdd', 'StepDel'
+    $defaultDisplaySet = New-Object System.Management.Automation.PSPropertySet('DefaultDisplayPropertySet', [string[]]($displayProperties))
+    $PSStandardMembers = [System.Management.Automation.PSMemberInfo[]]@($defaultDisplaySet)
+    
     # 轉換成 PSCustomObject
-    $List = @()
-    # $content1|ForEach-Object{
-    #     $item = ($_ -split("\t"))
-    #     $List += [PSCustomObject]@{ Status = $item[0]; Name = $item[1]; }
-    # }
+    $PsObj = @()
     for ($i = 0; $i -lt $content1.Count; $i++) {
         $item1 = ($content1[$i] -split("\t"))
         $item2 = ($content2[$i] -split("\t"))
-        # 取出字段
-        $Status = $item1[0]
-        $Name   = $item1[1]
-        $StepAdd = $item2[0]
-        $StepDel = $item2[1]
+        # # 取出字段
+        $Status, $Name     = $item1[0], $item1[1]
+        $StepAdd, $StepDel = $item2[0], $item2[1]
         # 特殊狀況改名時
         if ($Status -match '^R') {
             # $Status = 'R'
-            $Name   = $item1[2]
+            $OldName = $Name
+            $Name    = $item1[2]
         }
         # 轉換物件
-        $List += [PSCustomObject]@{
+        $PsObj += [PSCustomObject]@{
             Status  = $Status
             Name    = $Name
+            OldName = $OldName
             StepAdd = $StepAdd
             StepDel = $StepDel
+        } | Add-Member MemberSet PSStandardMembers $PSStandardMembers -PassThru
+    }
+    # 未追蹤檔案
+    if (!$Tracked -and (!$Cached -and !$Commit2)) {
+        for ($i = 0; $i -lt $content3.Count; $i++) {
+            $item1 = ($content3[$i] -split("\t"))
+            # # 取出字段
+            $Status, $Name = $item1[0], $item1[1]
+            # 轉換物件
+            $PsObj += [PSCustomObject]@{
+                Status  = $Status
+                Name    = $Name
+                OldName = $null
+                StepAdd = $null
+                StepDel = $null
+            } | Add-Member MemberSet PSStandardMembers $PSStandardMembers -PassThru
         }
     }
-    return $List
+    return $PsObj
 } # diffCommit INIT HEAD -Path "Z:\doc" -Filter "ADMR"
-#  diffCommit -Path "Z:\doc"
+# diffCommit -Path "Z:\doc" -Tracked
+# diffCommit -Path "Z:\doc" HEAD        # [HEAD  -> WorkDir]:: 未提交的變更
+# diffCommit -Path "Z:\doc" -Cached     # [HEAD  -> Stage]  :: 已暫存的變更
+# diffCommit -Path "Z:\doc"             # [Stage -> WorkDir]:: 未暫存的變更
+
 
 
 # 從指定提交點取出特定清單檔案
