@@ -1,39 +1,33 @@
-## 獲取 Git 倉庫的差異清單
-快速使用
-```ps1
-irm bit.ly/ArchiveGitCommit|iex; diffCommit INIT
-```
+# 獲取 Git 倉庫的差異清單
 
-> 當Commit參數只有一個的時候是代表起點，此時終點是Changed
+## 快速使用
+
+```ps1
+irm bit.ly/ArchiveGitCommit|iex; diffCommit HEAD
+```
 
 <br><br>
 
-詳細說明
+## 詳細說明
+
 ```ps1
 # 載入函式庫
 irm bit.ly/ArchiveGitCommit|iex
 
-# [Staged -> Changed] 的檔案比較 (Staged: 沒有Staged時是HEAD, Changed: 當前狀態但不包含新增的檔案)
+# 1. 未暫存變更:: [Staged -> WorkDir] (使用 -Tracked 可剔除未追蹤檔案)
 irm bit.ly/ArchiveGitCommit|iex; diffCommit
-# [HEAD -> Staged -> Changed] 的檔案比較  (Changed: 當前狀態但不包含新增的檔案)
+# 2. 未提交變更:: [HEAD -> WorkDir] (使用 -Tracked 可剔除未追蹤檔案)
 irm bit.ly/ArchiveGitCommit|iex; diffCommit HEAD
-# [HEAD^ -> HEAD] 的檔案比較 (全)
+# 3. 提交點間的變更 [HEAD^ -> HEAD]
 irm bit.ly/ArchiveGitCommit|iex; diffCommit HEAD^ HEAD
+# 4. 僅已暫存變更:: [HEAD -> Staged] (HEAD可省略或指定其他起點)
+irm bit.ly/ArchiveGitCommit|iex; diffCommit HEAD -Cached
 
 # 指定git倉庫位置
 irm bit.ly/ArchiveGitCommit|iex; diffCommit -Path "Z:\doc"
 # 過濾僅輸出變動的清單
 irm bit.ly/ArchiveGitCommit|iex; diffCommit -Filter "ADMR"
 ```
-
-<br><br>
-
-> 1. 關於節點參數的省略，這是跟著 git diff 的標準僅轉發命令而已
-> 2. 關於比較尚未提交的檔案清單
->    1. 如果省略兩個參數的會缺少新增的檔案
->    2. 正確的作法是Stage後指定起點為HEAD(終點留空)
-> 3. 在沒有Staged的情況下起點指定HEAD與省略是完全一樣的結果 [HEAD -> 當前狀態]
-
 
 
 <br><br><br>
