@@ -1,11 +1,15 @@
 # 比對兩個資料夾間檔案的差異
+
 ## 自動比對 (資料夾, 單檔, 壓縮檔)
+
 快速使用
+
 ```ps1
 irm bit.ly/DiffSource|iex; DiffSource $Left $Right
 ```
 
 詳細說明
+
 ```ps1
 # 設定
 $LeftPath  = "Z:\Work\INIT"
@@ -37,33 +41,39 @@ irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -Include @("css/DMWA1
 irm bit.ly/DiffSource|iex; DiffSource $LeftPath $RightPath -Include (Get-Content "Z:\Work\diff-list.txt")
 ```
 
-
-
 <br><br><br>
 
-# 比對 GIT 提交點
-比較尚未儲存的變更
+## 比對 GIT 提交點
+
+比較尚未提交的變更
+
 ```ps1
-irm bit.ly/DiffGitSource|iex; acvDC|cmpSrc
+irm bit.ly/DiffGitSource|iex; acvDC HEAD |cmpSrc
 ```
 
 比較兩個提交點
+
 ```ps1
-irm bit.ly/DiffGitSource|iex; acvDC INIT HEAD|cmpSrc
+irm bit.ly/DiffGitSource|iex; acvDC INIT HEAD |cmpSrc
 ```
 
 詳細使用說明
+
 ```ps1
 # 載入函式
 irm bit.ly/DiffGitSource|iex;
 
-# 比較尚未儲存的變更 [HEAD -> CURR] (新增的檔案如果沒有Stage則不會被列入)
-irm bit.ly/DiffGitSource|iex; acvDC|cmpSrc
-# 比較 [HEAD^ -> HEAD] 的變更
-irm bit.ly/DiffGitSource|iex; acvDC HEAD|cmpSrc
-# 比較 [INIT -> HEAD] 的變更
-irm bit.ly/DiffGitSource|iex; acvDC INIT HEAD|cmpSrc
+
+# 尚未暫存的變更 [Stage -> CURR]
+irm bit.ly/DiffGitSource|iex; acvDC |cmpSrc
+# 尚未提交的變更 [HEAD -> CURR] 的變更
+irm bit.ly/DiffGitSource|iex; acvDC HEAD |cmpSrc
+# 指定交點的變更 [HEAD^ -> HEAD] 的變更
+irm bit.ly/DiffGitSource|iex; acvDC HEAD^ HEAD |cmpSrc
+
+# 已經暫存的變更 [HEAD -> Stage] 的變更
+irm bit.ly/DiffGitSource|iex; acvDC -cached |cmpSrc
 
 # 比較節點的變更且輸出所有檔案
-irm bit.ly/DiffGitSource|iex; acvDC -OutAllFile|cmpSrc
+irm bit.ly/DiffGitSource|iex; acvDC -OutAllFile |cmpSrc
 ```
