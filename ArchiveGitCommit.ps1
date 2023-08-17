@@ -77,7 +77,7 @@ function diffCommit {
     for ($i = 0; $i -lt $content1.Count; $i++) {
         $item1 = ($content1[$i] -split("\t"))
         $item2 = ($content2[$i] -split("\t"))
-        # # 取出字段
+        # 取出字段
         $Status, $Name     = $item1[0], (DecodeOctal $item1[1])
         $StepAdd, $StepDel = $item2[0], $item2[1]
         # 特殊狀況改名時
@@ -221,7 +221,7 @@ function archiveCommit {
             # $FileInfo = $FileInfo|Where-Object{$_.FullName -notmatch ".git\*"}
             # 輸出當前狀況
             $FileInfo = @()
-            $List = (diffCommit -Path $Path).Name
+            $List = (diffCommit -Path $Path|Where-Object{$_.Status -notin "D"}).Name
             $List|ForEach-Object{
                 $obj = [IO.Path]::GetFullPath([IO.Path]::Combine($Path, $_))
                 $FileInfo += Get-Item $obj
@@ -448,9 +448,9 @@ function archiveDiffCommit {
     
     # 獲取 節點 差異檔案 (變更後)
     if ($OutAllFile) { 
-        # 輸出所有檔案
-        $Out1 = archiveCommit -Path:$Path -Output $Output $Commit1
-        $Out2 = archiveCommit -Path:$Path -Output $Output $Commit2
+        # 輸出所有檔案 (List為null預設會全出)
+        $Out1 = archiveCommit -Path:$Path -List:$null -Output $Output $Commit1
+        $Out2 = archiveCommit -Path:$Path -List:$null -Output $Output $Commit2
     } else {
         # 獲取差異清單檔案
         if ($List1) {$Out1 = archiveCommit -Path:$Path -List:($List1.Name) -Output $Output $Commit1}
@@ -533,3 +533,4 @@ function archiveDiffCommit {
 # 測試中文檔名問題
 # acvDC -Path:"Z:\gitCode"
 # acvDC -Path:"Z:\gitCode" |cmpSrc
+# acvDC -Path:"Z:\gitCode" -OutAllFile |cmpSrc
