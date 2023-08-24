@@ -53,7 +53,11 @@ function diffCommit {
     # 命令
     $Filter = $Stage = $null
     if ($Filter) { $Filter = "--diff-filter=$Filter" }
-    if ($Cached -and !$Commit2) { $Stage = "--cached" }
+    if ($Cached) {
+        if (!$Commit2) {
+            $Stage = "--cached"
+        } else { Write-Warning "The '-Cached' parameter will not take effect because it is only valid when 'Commit2' is empty." }
+    }
     $cmd1 = "git diff --name-status $Filter $Stage $Commit1 $Commit2".TrimEnd() -replace "\s{2,}", " "
     $cmd2 = "git diff --numstat $Filter $Stage $Commit1 $Commit2".TrimEnd() -replace "\s{2,}", " "
     $cmd3 = "(git ls-files --others --exclude-standard) -replace('^', `"U`t`")"
@@ -118,6 +122,71 @@ function diffCommit {
 # diffCommit -Path "Z:\doc" -Cached     # [HEAD  -> Stage]  :: 已暫存的變更
 # diffCommit -Path "Z:\doc"             # [Stage -> WorkDir]:: 未暫存的變更
 # (diffCommit -Path "Z:\doc" HEAD^^ HEAD^) |Select-Object * |Format-Table
+# diffCommit -Path "Z:\doc" HEAD^ HEAD -Cached
+
+
+
+# 封存資料夾中的特定檔案
+function archiveFiles {
+    param (
+        [string]$Path,
+        [string]$Output,
+        [string[]]$List,
+        [ValidateSet(1, 3, 5, 7, 9)]
+        [UInt16]$CompressionLevel = 5
+    )
+    [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
+    $Path = [IO.Path]::GetFullPath($Path)
+    $Output = [IO.Path]::GetFullPath($Output)
+    
+    # 檢查輸入路徑
+    if (!($Path -and (Test-Path -PathType Container $Path))) {
+        Write-Error "輸入的路徑 '$Path' 有誤, 必須是資料夾"
+    }    
+    
+    # 檢查 7z 命令是否存在
+    & { param (
+        [string]$Path
+    )
+        $Command = [IO.Path]::GetFileName($Path)
+        try { Get-Command $Command -ErrorAction Stop | Out-Null } catch {
+            $env:Path += ";$(Split-Path $Path)"
+            try { Get-Command $Command -ErrorAction Stop | Out-Null } catch {
+                Write-Error "Error:: Command '$Command' is not recognized." -ErrorAction Stop
+            }
+        }
+    } "C:\Program Files\7-Zip\7z.exe"
+    
+    # 如果提供了檔案清單，則壓縮清單中的檔案
+    if ($List) {
+        $filesToCompress = "'" + (($List -replace "^\.\\") -join "' '") + "'"
+    } else { # 壓縮整個資料夾
+        $filesToCompress = "$Path\*"
+    }
+    
+    # 生成壓縮命令
+    $tmp = "$Output.tmp"
+    $cmd = "7z.exe a -tzip '$tmp' $filesToCompress -mx=$CompressionLevel -aoa"
+    
+    # 執行壓縮檔案
+    Push-Location
+        Set-Location $Path
+        Write-Host $cmd -ForegroundColor DarkGray
+        $result = Invoke-Expression $cmd
+    Pop-Location
+    
+    # 覆蓋目標檔案
+    if (Test-Path $Output) {
+        Remove-Item $Output -Force
+    }
+    if (Test-Path $tmp) {
+        Rename-Item $tmp $Output
+    }
+    
+    # 回傳結果
+    $result -match "Everything is Ok"
+}
+
 
 
 
@@ -390,13 +459,13 @@ function archiveDiffCommit {
         [string] $Commit1,
         [Parameter(Position = 1, ParameterSetName = "")]
         [string] $Commit2,
+        
         [Parameter(ParameterSetName = "")]
         [string] $Path,
-        [Parameter(ParameterSetName = "")]
         [string] $Output,
+        
         [Parameter(ParameterSetName = "")]
         [switch] $OpenOutDir,
-        [Parameter(ParameterSetName = "")]
         [switch] $OutAllFile
     )
     # 檢測路徑
@@ -407,19 +476,20 @@ function archiveDiffCommit {
         if (Test-Path "$Env:TEMP\archiveDiffCommit\*") { Remove-Item "$Env:TEMP\archiveDiffCommit\*" -Recurse }
     }
     if (!(Test-Path -PathType:Container "$Path\.git")) { Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction:Stop }
-    # if (!$Commit1) { $Commit1 = 'HEAD' }
-    if ( $Commit1 -and !$Commit2) { $Commit2 = "$Commit1"; $Commit1 = "$Commit1^" }
-    if (!$Commit1 -and !$Commit2) { $Commit1 = "HEAD"; $IsCurrStatusDiff=$true}
-    # 輸出比較節點名稱
+    
+    
+    # 處理節點
+    if (!$Commit1) { $Commit1 = 'HEAD' }
+    if (!$Commit2) { $IsCurrStatusDiff=$true }
+    # 節點名稱
     $CommitName1 = $Commit1
     $CommitName2 = if ($Commit2) {$Commit2} else {'CURR'}
     Write-Host "Diff Commit:: [$CommitName1 -> $CommitName2]"
     
     
-    
     # 獲取 節點1 差異清單 (變更前)
-    $List1Cmd = "diffCommit $Commit2 $Commit1 -Path $Path"
-    # Write-Host $List1Cmd -ForegroundColor DarkGray
+    $List1Cmd = "diffCommit $Commit2 $Commit1 -Path $Path" -replace '\s+', ' '
+    # Write-Host "  List1:: $List1Cmd" -ForegroundColor DarkGray
     $List1 = Invoke-Expression $List1Cmd; if ($List1) {
         if ($IsCurrStatusDiff) {
             # 因為git的省參數狀態只能比較[HEAD->CURR]不能比較[CURR->HEAD]，直觀的解法把A跟D反過來就好
@@ -436,14 +506,15 @@ function archiveDiffCommit {
             $List1 = ($List1|Where-Object{$_.Status -notin "D"})
         }
     }
+    # Write-Host ($List1|Format-Table|Out-String)
     # 獲取 節點2 差異清單 (變更後)
-    $List2Cmd = "diffCommit $Commit1 $Commit2 -Path $Path"
-    # Write-Host $List2Cmd -ForegroundColor DarkGray
+    $List2Cmd = "diffCommit $Commit1 $Commit2 -Path $Path" -replace '\s+', ' '
+    # Write-Host "  List2:: $List2Cmd" -ForegroundColor DarkGray
     $OutList = Invoke-Expression $List2Cmd; if ($OutList) {
         # 排除已經被刪除的清單
         $List2 = ($OutList|Where-Object{$_.Status -notin "D"})
     }
-    
+    # Write-Host ($List2|Format-Table|Out-String)
     
     
     # 獲取 節點 差異檔案 (變更後)
@@ -453,8 +524,8 @@ function archiveDiffCommit {
         $Out2 = archiveCommit -Path:$Path -List:$null -Output $Output $Commit2
     } else {
         # 獲取差異清單檔案
-        if ($List1) {$Out1 = archiveCommit -Path:$Path -List:($List1.Name) -Output $Output $Commit1}
-        if ($List2) {$Out2 = archiveCommit -Path:$Path -List:($List2.Name) -Output $Output $Commit2}
+        if ($List1) { $Out1 = archiveCommit -Path:$Path -List:($List1.Name) -Output $Output $Commit1 }
+        if ($List2) { $Out2 = archiveCommit -Path:$Path -List:($List2.Name) -Output $Output $Commit2 }
         # Zip的定義中沒辦法存在空zip，遇到List1為空做一個空檔案比較
         if (!$List1) {
             if ($Commit1) { $ZipCmt = $Commit1 } else { $ZipCmt = "CURR" }
@@ -505,10 +576,11 @@ function archiveDiffCommit {
 }
 # 輸出 [HEAD -> CURR] 差異檔案
 # archiveDiffCommit -Path:"Z:\doc"
-# 輸出 [HEAD^ -> HEAD] 差異檔案
 # archiveDiffCommit HEAD -Path:"Z:\doc"
 # 輸出 [INIT -> HEAD] 差異檔案
-# archiveDiffCommit INIT0 HEAD -Path:"Z:\doc"
+# archiveDiffCommit INIT HEAD -Path:"Z:\doc"
+# 輸出 [HEAD -> INIT] 差異檔案
+# archiveDiffCommit HEAD INIT -Path:"Z:\doc"
 # 輸出 [INIT -> HEAD] 差異檔案並過濾特定檔案
 # archiveDiffCommit INIT0 HEAD -Path:"Z:\doc" -Include:@("*.css")
 # DiffSource "doc-INIT0.zip" "doc-HEAD.zip"
