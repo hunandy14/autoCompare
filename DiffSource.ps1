@@ -23,7 +23,7 @@ function Install-WinMerge {
         }
     } else {
         # 下載並解壓縮
-        Start-BitsTransfer $Url $DLPath
+        (New-Object Net.WebClient).DownloadFile($Url, $DLPath)
         Expand-Archive $DLPath $env:TEMP -Force
         # 加到臨時變數
         if (($env:Path).IndexOf($AppPath) -eq -1) {
