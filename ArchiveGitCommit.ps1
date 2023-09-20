@@ -48,6 +48,10 @@ function diffCommit {
     $Path = $Path -replace("^Microsoft.PowerShell.Core\\FileSystem::")
     if (!(Test-Path -PathType:Container "$Path\.git")) { Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction:Stop }
     
+    # 檢測git命令是否可用
+    try { Get-Command "git" -ErrorAction Stop | Out-Null } catch {
+        Write-Error "Command 'git' is not installed on this system. Please install Git to continue." -ErrorAction Stop
+    }
     
     
     # 命令
@@ -223,6 +227,12 @@ function archiveCommit {
     } else { $Path = Get-Location}
     $Path = $Path -replace("^Microsoft.PowerShell.Core\\FileSystem::")
     if (!(Test-Path -PathType:Container "$Path\.git")) { Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction:Stop }
+    
+    # 檢測git命令是否可用
+    try { Get-Command "git" -ErrorAction Stop | Out-Null } catch {
+        Write-Error "Command 'git' is not installed on this system. Please install Git to continue." -ErrorAction Stop
+    }
+    
     # 輸出到暫存
     if ($OutToTemp) {
         $Output = "$env:TEMP\ArchiveOutFile\ReleaseSrc"
