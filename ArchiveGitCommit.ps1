@@ -1,26 +1,39 @@
-# 解碼八禁制字串
+# 解碼八進制編碼的字串
 function DecodeOctal {
     param (
-        [Parameter(ValueFromPipeline)]
+        [Parameter(ValueFromPipeline, Mandatory)]
         [string]$InputString,
         [Text.Encoding]$Encoding = [Text.Encoding]::UTF8
     )
-    $bytesList = @()
-    for ($i = 0; $i -lt $InputString.Length; $i++) {
-        # 檢查當前字符是否是反斜線，並且是否有足夠的字符來解析八進制值
-        if (($InputString[$i] -eq "\") -and ($i+3 -lt $InputString.Length)) {
-            $octalCandidate = $InputString.Substring($i+1, 3)
-            # 檢查接下來的三個字符是否為有效的八進制數字
-            if ($octalCandidate -match "^[0-7]{3}$") {
-                $bytesList += ,[convert]::ToInt32($octalCandidate, 8)
-                $i += 3 # 移動到下一個字符，跳過八進制編碼
-                continue
+    try {
+        # 使用正則表達式一次性處理所有字符
+        $bytes = New-Object Collections.Generic.List[byte]
+        $pattern = '\\[0-7]{3}|.'
+        
+        [regex]::Matches($InputString, $pattern) | ForEach-Object {
+            $match = $_.Value
+            if ($match[0] -eq '\') {
+                try {
+                    # 處理八進制序列
+                    $bytes.Add([convert]::ToInt32($match.Substring(1), 8))
+                } catch {
+                    # 如果轉換失敗，保留原始字符
+                    $bytes.Add([byte][char]'\')
+                    $match.Substring(1).ToCharArray() | ForEach-Object {
+                        $bytes.Add([byte][char]$_)
+                    }
+                }
+            } else {
+                # 處理普通字符
+                $bytes.Add([byte][char]$match)
             }
         }
-        # 如果當前字符不是八進制編碼，直接添加到結果列表
-        $bytesList += ,[int][char]$InputString[$i]
-    } return $Encoding.GetString([byte[]]$bytesList).Trim('"')
-} # '"Z:/git/\346\226\260\345\242\236\350\263\207\346\226\231\345\244\276/\346\270\254\350\251\246\350\267\257\345\276\221.txt"'|DecodeOctal
+        
+        return $Encoding.GetString($bytes.ToArray()).Trim('"')
+    } catch {
+        Write-Error "Failed to decode octal string: $_" -ErrorAction Stop
+    }
+} # '"Z:/git/\346\226\260\345\242\236\350\263\207\346\226\231\345\244\276/\346\270\254\350\251\246\350\267\257\345\276\221.txt"' | DecodeOctal
 
 
 
@@ -367,7 +380,7 @@ function archiveCommit {
                         if ((Split-Path $Output -Leaf) -eq "archiveCommit-temp.zip") { Remove-Item $Output } # 多餘的if判斷避免砍錯檔案
                     } else {
                         Expand-Archive $Output $ExpPath
-                        if ((Split-Path $Output -Leaf) -eq "archiveCommit-temp.zip") { Remove-Item $Output } # 多餘的if判斷避免砍錯檔案
+                        if ((Split-Path $Output -Leaf) -eq "archiveCommit-temp.zip") { Remove-Item $Output } # 多���的if判斷避免砍錯檔案
                         $Output = $ExpPath
                     }
                 }
