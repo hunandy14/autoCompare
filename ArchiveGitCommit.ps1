@@ -35,8 +35,6 @@ function DecodeOctal {
     }
 } # '"Z:/git/\346\226\260\345\242\236\350\263\207\346\226\231\345\244\276/\346\270\254\350\251\246\350\267\257\345\276\221.txt"' | DecodeOctal
 
-
-
 # 獲取提交點的差異清單
 function diffCommit {
     param (
@@ -47,94 +45,117 @@ function diffCommit {
         [switch] $Cached,  # 剔除未提交檔案 (也可以解釋成將 Commit2 設置成 Stage [Commit2 必須為空])
         [switch] $Tracked, # 剔除未追蹤的清單 (git diff 是不包含未追蹤檔案的我修改了這個特性改成預設是有的 [只有在 Commit2 與 Cached 為空時才有效])
         [Parameter(ParameterSetName = "")]
-        [string] $Path,
+        [string] $Path = (Get-Location),
         [Parameter(ParameterSetName = "")]
         [string] $Filter
     )
     
     # 檢測路徑
-    if ($Path) {
-        [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
-        $Path = $Path -replace("^Microsoft.PowerShell.Core\\FileSystem::")
-        $Path = [System.IO.Path]::GetFullPath($Path)
-    } else { $Path = Get-Location}
-    $Path = $Path -replace("^Microsoft.PowerShell.Core\\FileSystem::")
-    if (!(Test-Path -PathType:Container "$Path\.git")) { Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction:Stop }
+    [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
+    $Path = $Path -replace "^Microsoft.PowerShell.Core\\FileSystem::"
+    $Path = [System.IO.Path]::GetFullPath($Path)
+    if (!(Test-Path -PathType Container "$Path\.git")) { 
+        Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction Stop 
+    }
     
-    # 檢測git命令是否可用
-    try { Get-Command "git" -ErrorAction Stop | Out-Null } catch {
+    # 檢測 git 命令
+    try { 
+        Get-Command "git" -ErrorAction Stop | Out-Null 
+    } catch {
         Write-Error "Command 'git' is not installed on this system. Please install Git to continue." -ErrorAction Stop
     }
     
-    
-    # 命令
-    $Filter = $Stage = $null
-    if ($Filter) { $Filter = "--diff-filter=$Filter" }
-    if ($Cached) {
-        if (!$Commit2) {
-            $Stage = "--cached"
-        } else { Write-Warning "The '-Cached' parameter will not take effect because it is only valid when 'Commit2' is empty." }
-    }
-    $cmd1 = "git diff --name-status $Filter $Stage $Commit1 $Commit2".TrimEnd() -replace "\s{2,}", " "
-    $cmd2 = "git diff --numstat $Filter $Stage $Commit1 $Commit2".TrimEnd() -replace "\s{2,}", " "
-    $cmd3 = "(git ls-files --others --exclude-standard) -replace('^', `"U`t`")"
-    
-    # 提取差分清單
-    if ($Path) { $curDir = (Get-Location).Path; Set-location $Path }
-    $content1 = @(Invoke-Expression $cmd1)
-    $content2 = @(Invoke-Expression $cmd2)
-    $content3 = @(Invoke-Expression $cmd3)
-    if ($Path) { Set-location $curDir }
-    
-    
-    
-    # 自訂顯示屬性
-    $displayProperties = 'Status', 'Name', 'StepAdd', 'StepDel'
-    $defaultDisplaySet = New-Object System.Management.Automation.PSPropertySet('DefaultDisplayPropertySet', [string[]]($displayProperties))
-    $PSStandardMembers = [System.Management.Automation.PSMemberInfo[]]@($defaultDisplaySet)
-    
-    # 轉換成 PSCustomObject
-    $PsObj = @()
-    for ($i = 0; $i -lt $content1.Count; $i++) {
-        $item1 = ($content1[$i] -split("\t"))
-        $item2 = ($content2[$i] -split("\t"))
-        # 取出字段
-        $Status, $Name     = $item1[0], (DecodeOctal $item1[1])
-        $StepAdd, $StepDel = $item2[0], $item2[1]
-        # 特殊狀況改名時
-        if ($Status -match '^R') {
-            # $Status = 'R'
-            $OldName = $Name
-            $Name    = $item1[2]
-        } else { $OldName = $null }
-        # 轉換物件
-        $PsObj += [PSCustomObject]@{
-            Status  = $Status
-            Name    = $Name
-            OldName = $OldName
-            StepAdd = $StepAdd
-            StepDel = $StepDel
-        } | Add-Member MemberSet PSStandardMembers $PSStandardMembers -PassThru
-    }
-    # 未追蹤檔案
-    if (!$Tracked -and (!$Cached -and !$Commit2)) {
-        for ($i = 0; $i -lt $content3.Count; $i++) {
-            $item1 = ($content3[$i] -split("\t"))
-            # # 取出字段
-            $Status, $Name = $item1[0], (DecodeOctal $item1[1])
-            # 轉換物件
-            $PsObj += [PSCustomObject]@{
-                Status  = $Status
-                Name    = $Name
-                OldName = $null
-                StepAdd = $null
-                StepDel = $null
-            } | Add-Member MemberSet PSStandardMembers $PSStandardMembers -PassThru
+    # 準備 git 命令參數
+    $gitParams = @{
+        Filter = if ($Filter) { "--diff-filter=$Filter" }
+        Stage  = if ($Cached) {
+            if (!$Commit2) {
+                "--cached"
+            } else { 
+                Write-Warning "The '-Cached' parameter will not take effect because it is only valid when 'Commit2' is empty."
+            }
         }
     }
-    return $PsObj|Sort-Object Name
+    
+    # 生成命令
+    $commands = @{
+        Status  = "git diff --name-status $($gitParams.Filter) $($gitParams.Stage) $Commit1 $Commit2".Trim() -replace "\s{2,}", " "
+        NumStat = "git diff --numstat $($gitParams.Filter) $($gitParams.Stage) $Commit1 $Commit2".Trim() -replace "\s{2,}", " "
+        Untracked = "(git ls-files --others --exclude-standard) -replace('^', `"U`t`")"
+    }
+    
+    # 執行命令獲取差異資訊
+    try {
+        Push-Location $Path
+        $results = @{
+            Status    = @(Invoke-Expression $commands.Status)
+            NumStat   = @(Invoke-Expression $commands.NumStat)
+            Untracked = @(if (!$Tracked -and (!$Cached -and !$Commit2)) { 
+                Invoke-Expression $commands.Untracked 
+            })
+        }
+    } finally {
+        Pop-Location
+    }
+    
+    # 設定預設顯示屬性
+    $defaultProperties = @('Status', 'Name', 'StepAdd', 'StepDel')
+    $defaultDisplaySet = New-Object System.Management.Automation.PSPropertySet(
+        'DefaultDisplayPropertySet', [string[]]$defaultProperties
+    )
+    $PSStandardMembers = [System.Management.Automation.PSMemberInfo[]]@($defaultDisplaySet)
+    
+    # 處理已追蹤的檔案變更
+    $changes = for ($i = 0; $i -lt $results.Status.Count; $i++) {
+        $statusParts = $results.Status[$i] -split "`t"
+        $numStatParts = $results.NumStat[$i] -split "`t"
+        
+        $change = [PSCustomObject]@{
+            Status  = $statusParts[0]
+            Name    = DecodeOctal $statusParts[1]
+            OldName = if ($statusParts[0] -match '^R') { $statusParts[1] }
+            StepAdd = $numStatParts[0]
+            StepDel = $numStatParts[1]
+        }
+        
+        # 處理重命名情況
+        if ($change.Status -match '^R') {
+            $change.Name = DecodeOctal $statusParts[2]
+        }
+        
+        Add-Member -InputObject $change -MemberType MemberSet -Name PSStandardMembers -Value $PSStandardMembers
+        $change
+    }
+    
+    # 處理未追蹤的檔案
+    $untrackedChanges = $results.Untracked | ForEach-Object {
+        $parts = $_ -split "`t"
+        $filePath = Join-Path $Path $parts[1]
+        
+        # 計算未追蹤檔案的行數
+        $stepAdd = if (Test-Path $filePath -PathType Leaf) {
+            try {
+                (Get-Content $filePath -Raw).Split("`n").Length
+            } catch {
+                $null  # 如果檔案無法讀取，返回 null
+            }
+        } else { $null }
+        
+        $change = [PSCustomObject]@{
+            Status  = $parts[0]
+            Name    = DecodeOctal $parts[1]
+            OldName = $null
+            StepAdd = $stepAdd
+            StepDel = 0
+        }
+        Add-Member -InputObject $change -MemberType MemberSet -Name PSStandardMembers -Value $PSStandardMembers
+        $change
+    }
+    
+    # 合併並排序結果
+    @($changes) + @($untrackedChanges) | Sort-Object Name
 } # diffCommit INIT HEAD -Path "Z:\doc" -Filter "ADMR"
-# diffCommit -Path "Z:\doc" -Tracked
+# diffCommit -Path "Z:\doc" -Tracked    # [Stage -> WorkDir]:: 未暫存的變更(不含未追蹤的檔案)
 # diffCommit -Path "Z:\doc" HEAD        # [HEAD  -> WorkDir]:: 未提交的變更
 # diffCommit -Path "Z:\doc" -Cached     # [HEAD  -> Stage]  :: 已暫存的變更
 # diffCommit -Path "Z:\doc"             # [Stage -> WorkDir]:: 未暫存的變更
@@ -380,7 +401,7 @@ function archiveCommit {
                         if ((Split-Path $Output -Leaf) -eq "archiveCommit-temp.zip") { Remove-Item $Output } # 多餘的if判斷避免砍錯檔案
                     } else {
                         Expand-Archive $Output $ExpPath
-                        if ((Split-Path $Output -Leaf) -eq "archiveCommit-temp.zip") { Remove-Item $Output } # 多���的if判斷避免砍錯檔案
+                        if ((Split-Path $Output -Leaf) -eq "archiveCommit-temp.zip") { Remove-Item $Output } # 多的if判斷避免砍錯檔案
                         $Output = $ExpPath
                     }
                 }
