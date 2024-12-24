@@ -152,7 +152,7 @@ function diffCommit {
     @($changes) + @($untrackedChanges) | Sort-Object Name
 }
 
-# Import-Module .\src\decodeOctal.ps1 -Force
+# Import-Module .\autoCompare.psm1
 # diffCommit -Path "Z:\doc"                   # [Stage -> WorkDir]:: 未暫存的變更
 # diffCommit -Path "Z:\doc" -Cached           # [HEAD  -> Stage]  :: 已暫存的變更
 # diffCommit -Path "Z:\doc" HEAD -Cached      # [HEAD  -> Stage]  :: 已暫存的變更

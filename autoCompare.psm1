@@ -2,10 +2,12 @@
 . "$PSScriptRoot\src\decodeOctal.ps1"
 . "$PSScriptRoot\src\archiveFiles.ps1"
 . "$PSScriptRoot\src\diffCommit.ps1"
+. "$PSScriptRoot\src\archiveCommit.ps1"
 
 # 導出所有公開函數
 Export-ModuleMember -Function @(
     'decodeOctal',
     'archiveFiles',
-    'diffCommit'
+    'diffCommit',
+    'archiveCommit'
 ) 
