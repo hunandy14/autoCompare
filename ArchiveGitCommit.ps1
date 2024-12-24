@@ -1,5 +1,5 @@
 # 引用模組
-Import-Module "$PSScriptRoot\ArchiveGitCommit.psm1"
+Import-Module "$PSScriptRoot\autoCompare.psm1"
 
 # 獲取提交點的差異清單
 function diffCommit {
