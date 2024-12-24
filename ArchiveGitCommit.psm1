@@ -1,0 +1,7 @@
+# 引用所有函數檔案
+. "$PSScriptRoot\src\decodeOctal.ps1"
+
+# 導出所有公開函數
+Export-ModuleMember -Function @(
+    'decodeOctal'
+) 
