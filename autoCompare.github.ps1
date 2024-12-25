@@ -2,6 +2,7 @@ $PSJwtModuleHome = 'https://raw.githubusercontent.com/hunandy14/autoCompare/refs
 
 $scriptPaths = @(
     "decodeOctal.ps1",
+    "Invoke-Git.ps1",
     "archiveFiles.ps1",
     "diffCommit.ps1"
 )
