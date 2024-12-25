@@ -78,11 +78,12 @@ function diffCommit {
     }
     
     # 設定預設顯示屬性
-    $defaultProperties = @('Status', 'Name', 'StepAdd', 'StepDel')
-    $defaultDisplaySet = New-Object System.Management.Automation.PSPropertySet(
-        'DefaultDisplayPropertySet', [string[]]$defaultProperties
+    $PSStandardMembers = [Management.Automation.PSMemberInfo[]]@(
+        New-Object Management.Automation.PSPropertySet(
+            'DefaultDisplayPropertySet',
+            [string[]]@('Status', 'Name', 'StepAdd', 'StepDel')
+        )
     )
-    $PSStandardMembers = [System.Management.Automation.PSMemberInfo[]]@($defaultDisplaySet)
     
     # 處理已追蹤的檔案變更
     $changes = for ($i = 0; $i -lt $results.Status.Count; $i++) {
