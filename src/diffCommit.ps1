@@ -4,39 +4,38 @@ function diffCommit {
     .SYNOPSIS
         獲取 Git 提交點的差異清單
     .PARAMETER Commit1
-        起始提交點。若未指定，則使用HEAD
+        起始提交點。若未指定，則使用 Stage (當使用 Cached 時會變更成 HEAD)
     .PARAMETER Commit2
-        結束提交點。若未指定，則使用工作目錄
+        結束提交點。若未指定，則使用工作目錄  (當使用 Cached 時會變更成 Stage)
     .PARAMETER Cached
-        只顯示已暫存的變更 (不能與 Commit2 同時使用)
+        只顯示已暫存的變更 (不可指定 Commit2)
     .PARAMETER Tracked
-        只顯示已追蹤的檔案變更 (不能與 Commit2, Cached 同時使用)
+        只顯示已追蹤的檔案變更 (不可指定 Commit2, Cached)
     .EXAMPLE
+        diffCommit -Cached         # [HEAD   -> Stage  ] 已暫存的變更 (可指定 Commit1 更改起點)
         diffCommit                 # [Stage  -> WorkDir] 未暫存的變更 (可指定 Tracked 剔除未追蹤的檔案)
         diffCommit HEAD            # [Commit -> WorkDir] 未提交的變更 (可指定 Tracked 剔除未追蹤的檔案)
-        diffCommit -Cached         # [Commit -> Stage  ] 已暫存的變更 (不能指定 Commit2, 可指定 Commit1 更改起點)
-        diffCommit HEAD^ HEAD      # [Commit -> Commit ] 指定兩個 Commit 的變更
+        diffCommit HEAD^ HEAD      # [Commit -> Commit ] 指定 Commit 的範圍
     #>
     
     [CmdletBinding(DefaultParameterSetName = 'WorkDir')]
     param (
-        # 一般比較模式
+        # 比較兩個 Commit 的變更
         [Parameter(Position = 0, ParameterSetName = 'WorkDir')]
         [Parameter(Position = 0, ParameterSetName = 'Staged')]
-        [Parameter(Position = 0, ParameterSetName = 'Commits')]
-        [string] $Commit1, # Commit 兩者未輸入時輸出 [暫存 -> 當前工作目錄] 的變更
+        [Parameter(Position = 0, ParameterSetName = 'Commits', Mandatory = $true)]
+        [string] $Commit1,
         
         [Parameter(Position = 1, ParameterSetName = 'Commits')]
-        [string] $Commit2, # Commit2 未輸入時輸出 [Commit1 -> 當前工作目錄] 的變更
+        [string] $Commit2,
         
-        # 將 Commit2 設為 Stage 點(已經 add 但尚未提交的範圍)
+        # 已暫存的變更 (已經 git add 但尚未提交)
         [Parameter(ParameterSetName = 'Staged')]
-        [switch] $Cached, # 剔除未提交檔案 (也可以解釋成將 Commit2 設置成 Stage [Commit2 必須為空])
+        [switch] $Cached,
         
-        # 將被設置成 WorkDir 範疇的 Commit2 擴展增加 Untracked 的檔案
+        # 剔除未追蹤的檔案 (原生 git diff 是不包含未追蹤檔案的, 我修改了這個特性改成預設是有的)
         [Parameter(ParameterSetName = 'WorkDir')]
-        [switch] $Tracked, # 剔除未追蹤的清單 [只有在 Commit2 與 Cached 為空時才有效]
-        # (git diff 是不包含未追蹤檔案的, 我修改了這個特性改成預設是有的)
+        [switch] $Tracked,
         
         # 路徑參數
         [string] $Path = (Get-Location),
@@ -107,7 +106,7 @@ function diffCommit {
         $change
     }
     
-    # 處理未追蹤的檔案
+    # 處理未追蹤的檔案 (git 原生未追蹤的檔案不會有 Status 與 NumStat)
     $untrackedChanges = $results.Untracked | ForEach-Object {
         $parts = $_ -split "`t"
         $filePath = Join-Path $Path $parts[1]
@@ -116,9 +115,7 @@ function diffCommit {
         $stepAdd = if (Test-Path $filePath -PathType Leaf) {
             try {
                 (Get-Content $filePath -Raw).Split("`n").Length
-            } catch {
-                $null  # 果案無法讀取，返回 null
-            }
+            } catch { $null }
         } else { $null }
         
         $change = [PSCustomObject]@{
@@ -139,15 +136,22 @@ function diffCommit {
 # Import-Module ".\src\decodeOctal.ps1"
 # Import-Module ".\src\Invoke-Git.ps1"
 
+# diffCommit -Path "Z:\doc" -Cached           # [HEAD  -> Stage  ]:: 已暫存的變更
+# diffCommit -Path "Z:\doc" HEAD -Cached      # [HEAD  -> Stage  ]:: 已暫存的變更
+# diffCommit -Path "Z:\doc" HEAD^ -Cached     # [HEAD^ -> Stage  ]:: 已暫存的變更
+
 # diffCommit -Path "Z:\doc"                   # [Stage -> WorkDir]:: 未暫存的變更
-# diffCommit -Path "Z:\doc" -Cached           # [HEAD  -> Stage]  :: 已暫存的變更
-# diffCommit -Path "Z:\doc" HEAD -Cached      # [HEAD  -> Stage]  :: 已暫存的變更
 # diffCommit -Path "Z:\doc" HEAD              # [HEAD  -> WorkDir]:: 未提交的變更
+# diffCommit -Path "Z:\doc" HEAD^ HEAD        # [HEAD^ -> HEAD   ]:: 指定範圍的變更
+
 # diffCommit -Path "Z:\doc" -Tracked          # [Stage -> WorkDir]:: 未暫存的變更(不含未追蹤的檔案)
 # diffCommit -Path "Z:\doc" HEAD -Tracked     # [HEAD  -> WorkDir]:: 未提交的變更(不含未追蹤的檔案)
-# diffCommit INIT HEAD -Path "Z:\doc" -Filter "ADMR"
+# diffCommit -Path "Z:\doc" HEAD^ -Tracked    # [HEAD  -> WorkDir]:: 未提交的變更(不含未追蹤的檔案)
+
+# diffCommit INIT HEAD -Path "Z:\doc" -Filter "ADMR"    # 僅顯示已暫存、未暫存、已提交、未提交的檔案
 # (diffCommit -Path "Z:\doc" HEAD^^ HEAD^) |Select-Object * |Format-Table
 
-# diffCommit -Path "Z:\doc" HEAD^ HEAD -Cached
-# diffCommit -Path "Z:\doc" HEAD^ HEAD -Tracked
-# diffCommit -Path "Z:\doc" -Tracked -Cached
+# diffCommit -Path "Z:\doc" HEAD^ HEAD -Cached      # Cached 不可指定 Commit2
+# diffCommit -Path "Z:\doc" HEAD^ HEAD -Tracked     # Tracked 不可指定 Commit2
+# diffCommit -Path "Z:\doc" HEAD -Tracked -Cached   # Tracked 不可指定 Cached
+# diffCommit -Path "Z:\doc" -Tracked -Cached        # Tracked 不可指定 Cached
