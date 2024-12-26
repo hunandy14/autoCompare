@@ -11,17 +11,14 @@ function ConvertFrom-OctalString {
     
     # 執行替換
     [regex]::Replace($InputString, $pattern, {
-        param($m)
         try {
-            if ($m.Value.Length -ne 12) { throw }
-            return $Encoding.GetString([byte[]](
-                [Convert]::ToByte($m.Value.Substring(1, 3), 8),
-                [Convert]::ToByte($m.Value.Substring(5, 3), 8),
-                [Convert]::ToByte($m.Value.Substring(9, 3), 8)
+            $Encoding.GetString( [byte[]](
+                [Convert]::ToByte($args[0].Value.Substring(1, 3), 8),
+                [Convert]::ToByte($args[0].Value.Substring(5, 3), 8),
+                [Convert]::ToByte($args[0].Value.Substring(9, 3), 8)
             ))
-        }
-        catch {
-            return $m.Value
+        } catch {
+            return $args[0].Value
         }
     })
 }
