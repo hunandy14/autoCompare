@@ -91,7 +91,7 @@ function diffCommit {
         
         $change = [PSCustomObject]@{
             Status  = $statusParts[0]
-            Name    = decodeOctal $statusParts[1]
+            Name    = ConvertFrom-OctalString $statusParts[1]
             OldName = if ($statusParts[0] -match '^R') { $statusParts[1] }
             StepAdd = $numStatParts[0]
             StepDel = $numStatParts[1]
@@ -99,7 +99,7 @@ function diffCommit {
         
         # 處理重命名情況
         if ($change.Status -match '^R') {
-            $change.Name = decodeOctal $statusParts[2]
+            $change.Name = ConvertFrom-OctalString $statusParts[2]
         }
         
         Add-Member -InputObject $change -MemberType MemberSet -Name PSStandardMembers -Value $PSStandardMembers
@@ -120,7 +120,7 @@ function diffCommit {
         
         $change = [PSCustomObject]@{
             Status  = $parts[0]
-            Name    = decodeOctal $parts[1]
+            Name    = ConvertFrom-OctalString $parts[1]
             OldName = $null
             StepAdd = $stepAdd
             StepDel = 0
@@ -133,7 +133,7 @@ function diffCommit {
     @($changes) + @($untrackedChanges) | Sort-Object Name
 }
 
-# Import-Module ".\src\decodeOctal.ps1"
+# Import-Module ".\src\ConvertFrom-OctalString.ps1"
 # Import-Module ".\src\Invoke-Git.ps1"
 
 # diffCommit -Path "Z:\doc" -Cached           # [HEAD  -> Stage  ]:: 已暫存的變更
