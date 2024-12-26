@@ -4,25 +4,11 @@ function ConvertFrom-OctalBytes {
         [Parameter(Mandatory)]
         [string]$OctalString
     )
-    
-    # 使用一個動態 List 來累積 byte
-    $bytes = New-Object System.Collections.Generic.List[Byte]
-    $i = 0
-    
-    while ($i -lt $OctalString.Length) {
-        if ($OctalString[$i] -eq '\') {
-            # 這裡預期接下來 3 碼都是八進制 [0-7]
-            $octPart = $OctalString.Substring($i + 1, 3)
-            $bytes.Add([Convert]::ToInt32($octPart, 8))
-            $i += 4  # 跳過 '\NNN' 共 4 字元
-        }
-        else {
-            # 如果遇到任何非預期字元，就視為錯誤
-            throw "Invalid octal escape at position $i"
-        }
-    }
-    
-    return $bytes.ToArray()
+    return [byte[]](
+        [Convert]::ToByte($OctalString.Substring(1, 3), 8),
+        [Convert]::ToByte($OctalString.Substring(5, 3), 8),
+        [Convert]::ToByte($OctalString.Substring(9, 3), 8)
+    )
 }
 
 function decodeOctal {
@@ -32,14 +18,14 @@ function decodeOctal {
         [Text.Encoding]$Encoding = [Text.Encoding]::UTF8
     )
     
-    $pattern = '(\\[0-7]{3})+'
+    # 匹配三個連續的八進制序列（一個完整的中文字符）
+    $pattern = '(\\[0-7]{3}){3}'
     try {
         $result = [regex]::Replace($InputString, $pattern, {
             param($m)
             try {
-                # 直接將匹配到的八進制序列轉換為字節數組
+                # 將三個八進制序列轉換為一個字符
                 $bytes = ConvertFrom-OctalBytes -OctalString $m.Value
-                # 把收集到的所有 Byte，一次用指定編碼還原成字串
                 return $Encoding.GetString($bytes)
             }
             catch {
