@@ -6,29 +6,31 @@ function Invoke-Git {
         Git 命令及其參數
     .PARAMETER Path
         Git 倉庫的路徑
+    .PARAMETER Encoding
+        指定輸出編碼，預設為 UTF8
     .EXAMPLE
         Invoke-Git status
         Invoke-Git diff --name-status HEAD
         Invoke-Git -Path $repoPath status
-        Invoke-Git status -Path $repoPath
+        Invoke-Git status -Path $repoPath -Encoding ([Text.Encoding]::UTF8)
     #>
     [CmdletBinding()]
     param (
+        # 指定 Git 命令及其參數
         [Parameter(Mandatory, Position = 0, ValueFromRemainingArguments)]
         [ValidateNotNull()]
         [string[]]$Command,
         
+        # 指定 Git 倉庫路徑，預設為當前路徑
         [Parameter()]
-        [ValidateScript({
-            if (!(Test-Path $_ -PathType Container)) {
-                throw "Path does not exist or is not a directory: $_"
-            }
-            if (!(Test-Path (Join-Path $_ ".git") -PathType Container)) {
-                throw "Not a valid Git repository: $_"
-            }
-            return $true
-        })]
-        [string]$Path = (Get-Location)
+        [ValidateScript(
+            { Test-Path (Join-Path $_ ".git") -PathType Container },
+            ErrorMessage = "Invalid Git repository: {0}")
+        ] [string]$Path = (Get-Location),
+        
+        # 指定輸出編碼，預設為 UTF8
+        [Parameter()]
+        [Text.Encoding]$Encoding = ([Text.Encoding]::GetEncoding(65001))
     )
     
     # 檢測 git 命令是否存在
@@ -44,15 +46,12 @@ function Invoke-Git {
         [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
         $Path = $Path -replace "^Microsoft.PowerShell.Core\\FileSystem::"
         $Path = [System.IO.Path]::GetFullPath($Path)
-        if (!(Test-Path -PathType Container "$Path\.git")) { 
-            Write-Error "Error:: The path `"$Path`" is not a git folder" -ErrorAction Stop 
-        }
         Write-Verbose "Using Git repository at: $Path"
         Push-Location $Path
         
-        # 臨時改變控制台編碼為 utf8
+        # 臨時改變控制台編碼
         $originalEncoding = [Console]::OutputEncoding
-        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+        [Console]::OutputEncoding = $Encoding
         
         # 執行 Git 命令並捕獲所有輸出
         Write-Verbose "Executing Git command: git $($Command -join ' ')"
@@ -86,4 +85,5 @@ function Invoke-Git {
         [Console]::OutputEncoding = $originalEncoding
         Pop-Location
     }
-}
+} # Invoke-Git diff -Path "Z:/doc" -Encoding ([Text.Encoding]::GetEncoding(932))
+# Invoke-Git diff -Path "Z:/doc/non"
