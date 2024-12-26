@@ -6,30 +6,34 @@ function decodeOctal {
         [Text.Encoding]$Encoding = [Text.Encoding]::UTF8
     )
     try {
-        # 使用正則表達式一次性處理所有字符
-        $bytes = New-Object Collections.Generic.List[byte]
-        $pattern = '\\[0-7]{3}|.'
+        # 使用正則表達式找出所有可能的八進制序列組
+        $result = $InputString
+        $pattern = '(?:\\[0-7]{3})+'
         
         [regex]::Matches($InputString, $pattern) | ForEach-Object {
+            Write-Host $_.Value
             $match = $_.Value
-            if ($match[0] -eq '\') {
-                try {
-                    # 處理八進制序列
-                    $bytes.Add([convert]::ToInt32($match.Substring(1), 8))
-                } catch {
-                    # 如果轉換失敗，保留原始字符
-                    $bytes.Add([byte][char]'\')
-                    $match.Substring(1).ToCharArray() | ForEach-Object {
-                        $bytes.Add([byte][char]$_)
-                    }
+            try {
+                # 收集所有連續的八進制值
+                $bytes = New-Object Collections.Generic.List[byte]
+                $octalGroups = [regex]::Matches($match, '\\[0-7]{3}')
+                
+                foreach ($group in $octalGroups) {
+                    $octalValue = [convert]::ToInt32($group.Value.Substring(1), 8)
+                    $bytes.Add($octalValue)
                 }
-            } else {
-                # 處理普通字符
-                $bytes.Add([byte][char]$match)
+                
+                # 將字節數組轉換為字符
+                $decodedChar = $Encoding.GetString($bytes.ToArray())
+                # 替換原始字串中的八進制序列
+                $result = $result.Replace($match, $decodedChar)
+            } catch {
+                # 如果轉換失敗，保留原始序列
+                Write-Warning "Failed to decode octal sequence $match : $_"
             }
         }
         
-        return $Encoding.GetString($bytes.ToArray()).Trim('"')
+        return $result.Trim('"')
     } catch {
         Write-Error "Failed to decode octal string: $_" -ErrorAction Stop
     }
@@ -46,7 +50,7 @@ function decodeOctal {
 # '\999' | decodeOctal
 
 # 混合內容測試
-# 'Hello\346\226\260World' | decodeOctal
+'Hello\346\226\260ㄅㄆㄇ\346\226\260\346\226\260あいう\346\226\260World\777\777\777' | decodeOctal
 
 # 不同編碼測試
 # 'Test' | decodeOctal -Encoding ([Text.Encoding]::ASCII)
