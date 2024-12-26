@@ -1,14 +1,22 @@
 # 解碼八進制編碼的字串
-function ConvertFrom-OctalBytes {
+function ConvertFrom-OctalString {
+    [CmdletBinding()]
     param (
-        [Parameter(Mandatory)]
-        [string]$OctalString
-    )
-    return [byte[]](
-        [Convert]::ToByte($OctalString.Substring(1, 3), 8),
-        [Convert]::ToByte($OctalString.Substring(5, 3), 8),
-        [Convert]::ToByte($OctalString.Substring(9, 3), 8)
-    )
+        [Parameter(Position = 0, Mandatory, ValueFromPipeline)]
+        [string]$OctalString,
+        [Text.Encoding]$Encoding = [Text.Encoding]::UTF8
+    ) PROCESS { try {
+        # 確保輸入是三個八進制序列（12個字符：3組的\NNN）
+        if ($OctalString.Length -ne 12) { throw }
+        # 直接轉換三個八進制序列為一個字符
+        return $Encoding.GetString([byte[]](
+            [Convert]::ToByte($OctalString.Substring(1, 3), 8),
+            [Convert]::ToByte($OctalString.Substring(5, 3), 8),
+            [Convert]::ToByte($OctalString.Substring(9, 3), 8)
+        ))
+    } catch {
+        return $OctalString
+    } }
 }
 
 function decodeOctal {
@@ -18,23 +26,12 @@ function decodeOctal {
         [Text.Encoding]$Encoding = [Text.Encoding]::UTF8
     )
     
-    # 匹配三個連續的八進制序列（一個完整的中文字符）
-    $pattern = '(\\[0-7]{3}){3}'
     try {
-        $result = [regex]::Replace($InputString, $pattern, {
-            param($m)
-            try {
-                # 將三個八進制序列轉換為一個字符
-                $bytes = ConvertFrom-OctalBytes -OctalString $m.Value
-                return $Encoding.GetString($bytes)
-            }
-            catch {
-                # 解析失敗就原樣回傳
-                return $m.Value
-            }
-        })
+        # 匹配三個連續的八進制序列（一個完整的中文字符）
+        $pattern = '(\\[0-7]{3}){3}'
+        $result = [regex]::Replace($InputString, $pattern, ${function:ConvertFrom-OctalString})
 
-        return $result.Trim('"')
+        return $result
     }
     catch {
         Write-Error "Failed to decode octal string: $_" -ErrorAction Stop
