@@ -1,47 +1,5 @@
-# 安裝 WinMerge
-function Install-WinMerge {
-    param (
-        [switch] $Force
-    )
-    # 檢測命令是否已經存在
-    $CmdName = "WinMergeU"
-    if ((!$Force) -and (Get-Command $CmdName -CommandType:Application -EA:0)) { return }
-    
-    # 獲取設置
-    $Url = "https://github.com/WinMerge/winmerge/releases/download/v2.16.24/winmerge-2.16.24-x64-exe.zip"
-    $Url -match "[^/]+(?!.*/)" |Out-Null
-    $ZipName = $Matches[0]
-    $DLPath = $env:TEMP+"\$ZipName"
-    $AppPath = $env:TEMP+"\WinMerge"
-    $AppExec = $AppPath+"\WinMergeU.exe"
-    
-    # 檢測下載資料夾是否存在
-    if (Get-Command $AppExec -CommandType:Application -EA:0) {
-        if (($env:Path).IndexOf($AppPath) -eq -1) {
-            if ($env:Path[-1] -ne ';') { $env:Path = $env:Path+';' }
-            $env:Path = $env:Path+$AppPath
-        }
-    } else {
-        # 下載並解壓縮
-        (New-Object Net.WebClient).DownloadFile($Url, $DLPath)
-        Expand-Archive $DLPath $env:TEMP -Force
-        # 加到臨時變數
-        if (($env:Path).IndexOf($AppPath) -eq -1) {
-            if ($env:Path[-1] -ne ';') { $env:Path = $env:Path+';' }
-            $env:Path = $env:Path+$AppPath
-        }
-    }
-    
-    # 驗證安裝
-    if (!(Get-Command $CmdName -CommandType:Application -EA:0)) { Write-Error "Error:: WinMerge installation failed." -ForegroundColor:Yellow; return } else {
-        return $AppExec
-    }
-} # Install-WinMerge -Force
-
-
-
 # 比較程式碼差異
-function DiffSource {
+function diffSource {
     [Alias("cmpSrc")]
     param (
         [Parameter(Position = 0, ParameterSetName = "A", Mandatory)]
@@ -77,7 +35,7 @@ function DiffSource {
         $Output = [System.IO.Path]::GetFullPath($Output)
         $Output = $Output -replace("^Microsoft.PowerShell.Core\\FileSystem::")
         if (!($Output -match ".html$")) { Write-Host "Error:: Output Path is not HTML file." -ForegroundColor:Yellow; return }
-    } else { $Output = "$env:TEMP\DiffSource\index.html" }
+    } else { $Output = "$env:TEMP\diffSource\index.html" }
     
     # 比較壓縮檔中第二層資料夾(資料夾名必須與壓縮檔名一致)
     if ($CompareZipSecondLayer) {
@@ -127,15 +85,15 @@ $ArgumentList = @"
     Start-Process WinMergeU $ArgumentList -Wait
     if (!$NoOpenHTML) { explorer.exe $Output }
     return $Output
-}} # DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html'
-# DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -NoOpenHTML -IgnoreSameFile -IgnoreWhite
-# DiffSource 'Z:\Work\INIT.zip' 'Z:\Work\master.zip' -Output 'Z:\Work\Diff\index.html' -CompareZipSecondLayer
-# DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Filter ((Get-Content "Z:\Work\diff-list.txt") -replace ".*?(\\|/)" -join ";")
-# DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Include (Get-Content "Z:\Work\diff-list.txt")
-# DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Include @("DMWA1010.xsl", "css/DMWZ01.css")
-# DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' 
-# DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Filter "js\"
-# DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Filter "!js\;!xsl\"
-# DiffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Include @("js/aaa/DMWA0010.js")
-# DiffSource 'Z:\DiffSource\before' 'Z:\DiffSource\after' -Output 'Z:\DiffSource\Report\index.html' -Include (Get-Content "Z:\DiffSource\list.txt") -Filter "!xml\"
-# (Get-ChildItem 'C:\Users\hunan\AppData\Local\Temp\archiveCommit' -Directory)|DiffSource
+}} # diffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html'
+# diffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -NoOpenHTML -IgnoreSameFile -IgnoreWhite
+# diffSource 'Z:\Work\INIT.zip' 'Z:\Work\master.zip' -Output 'Z:\Work\Diff\index.html' -CompareZipSecondLayer
+# diffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Filter ((Get-Content "Z:\Work\diff-list.txt") -replace ".*?(\\|/)" -join ";")
+# diffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Include (Get-Content "Z:\Work\diff-list.txt")
+# diffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Include @("DMWA1010.xsl", "css/DMWZ01.css")
+# diffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' 
+# diffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Filter "js\"
+# diffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Filter "!js\;!xsl\"
+# diffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Include @("js/aaa/DMWA0010.js")
+# diffSource 'Z:\diffSource\before' 'Z:\diffSource\after' -Output 'Z:\diffSource\Report\index.html' -Include (Get-Content "Z:\diffSource\list.txt") -Filter "!xml\"
+# (Get-ChildItem 'C:\Users\hunan\AppData\Local\Temp\archiveCommit' -Directory)|diffSource

@@ -6,7 +6,8 @@ $scriptPaths = @(
     "diffCommit.ps1",
     "archiveFiles.ps1",
     "archiveCommit.ps1",
-    "archiveDiffCommit.ps1"
+    "archiveDiffCommit.ps1",
+    "diffSource.ps1"
 )
 
 foreach ($scriptPath in $scriptPaths) {

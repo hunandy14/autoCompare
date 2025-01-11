@@ -5,6 +5,7 @@
 . "$PSScriptRoot\src\archiveFiles.ps1"
 . "$PSScriptRoot\src\archiveCommit.ps1"
 . "$PSScriptRoot\src\archiveDiffCommit.ps1"
+. "$PSScriptRoot\src\diffSource.ps1"
 
 # 導出所有公開函數
 Export-ModuleMember -Function @(
@@ -13,7 +14,8 @@ Export-ModuleMember -Function @(
     'archiveCommit',
     'archiveDiffCommit'
 ) -Alias @(
-    'acvDC'
+    'acvDC',
+    'cmpSrc'
 )
 
 # 引用模組: Import-Module .\autoCompare.psm1
