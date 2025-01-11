@@ -39,18 +39,20 @@ function diffSource {
     
     # 比較壓縮檔中第二層資料夾(資料夾名必須與壓縮檔名一致)
     if ($CompareZipSecondLayer) {
-        # LeftPath
-        $File = Get-Item $LeftPath
-        if($File.Extension -eq '.zip'){
-            $ExpandPath = $env:TEMP+"\"+$File.BaseName
-            Expand-Archive $File.FullName $ExpandPath -Force
-        } $LeftPath = $ExpandPath+"\"+$File.BaseName
-        # RightPath
-        $File = Get-Item $RightPath
-        if($File.Extension -eq '.zip'){
-            $ExpandPath = $env:TEMP+"\"+$File.BaseName
-            Expand-Archive $File.FullName $ExpandPath -Force
-        } $RightPath = $ExpandPath+"\"+$File.BaseName
+        function Expand-ZipSecondLayer {
+            param([string]$Path)
+            
+            $File = Get-Item $Path
+            if ($File.Extension -eq '.zip') {
+                $ExpandPath = Join-Path $env:TEMP $File.BaseName
+                Expand-Archive $File.FullName $ExpandPath -Force
+                return Join-Path $ExpandPath $File.BaseName
+            }
+            return $Path
+        }
+
+        $LeftPath = Expand-ZipSecondLayer $LeftPath
+        $RightPath = Expand-ZipSecondLayer $RightPath
     }
     
     # 處理Incule參數，獲取FileName
