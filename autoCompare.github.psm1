@@ -4,7 +4,8 @@ $scriptPaths = @(
     "ConvertFrom-OctalString.ps1",
     "Invoke-Git.ps1",
     "archiveFiles.ps1",
-    "diffCommit.ps1"
+    "diffCommit.ps1",
+    "archiveCommit.ps1"
 )
 
 foreach ($scriptPath in $scriptPaths) {
@@ -19,3 +20,5 @@ foreach ($scriptPath in $scriptPaths) {
         Write-Error "$($_.Exception.Message)" -ea 1
     }
 }
+
+# 引用模組: irm raw.githubusercontent.com/hunandy14/autoCompare/refs/heads/dev/2.0/autoCompare.github.psm1|iex
