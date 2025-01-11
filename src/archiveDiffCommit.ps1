@@ -1,6 +1,3 @@
-# 引用模組
-Import-Module "$PSScriptRoot\autoCompare.psm1"
-
 # 封存 Git差異節點 間的變動檔案
 function archiveDiffCommit {
     [Alias("acvDC")]

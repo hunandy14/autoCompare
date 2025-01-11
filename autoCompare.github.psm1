@@ -3,9 +3,10 @@ $PSJwtModuleHome = 'https://raw.githubusercontent.com/hunandy14/autoCompare/refs
 $scriptPaths = @(
     "ConvertFrom-OctalString.ps1",
     "Invoke-Git.ps1",
-    "archiveFiles.ps1",
     "diffCommit.ps1",
-    "archiveCommit.ps1"
+    "archiveFiles.ps1",
+    "archiveCommit.ps1",
+    "archiveDiffCommit.ps1"
 )
 
 foreach ($scriptPath in $scriptPaths) {
