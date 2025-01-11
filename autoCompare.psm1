@@ -7,9 +7,9 @@
 
 # 導出所有公開函數
 Export-ModuleMember -Function @(
-    'ConvertFrom-OctalString',
     'archiveFiles',
-    'Invoke-Git',
     'diffCommit',
     'archiveCommit'
 ) 
+
+# 引用模組: Import-Module .\autoCompare.psm1
