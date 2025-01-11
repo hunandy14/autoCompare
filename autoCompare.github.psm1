@@ -4,7 +4,6 @@ $scriptPaths = @(
     "unity/ConvertFrom-OctalString.ps1",
     "unity/Invoke-Git.ps1",
     "diffCommit.ps1",
-    "archiveFiles.ps1",
     "archiveCommit.ps1",
     "archiveDiffCommit.ps1",
     "diffSource.ps1"

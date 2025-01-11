@@ -1,5 +1,5 @@
 # 封存資料夾中的特定檔案 (因為git無法archive未加入的檔案寫一個補齊)
-function archiveFiles {
+function Compress-Files {
     param (
         [string]$Path,
         [string]$Output,
@@ -60,10 +60,10 @@ function archiveFiles {
 }
 
 # 基本使用方式
-# archiveFiles -Path "C:\MyFolder" -Output "C:\output.zip"
+# Compress-Files -Path "C:\MyFolder" -Output "C:\output.zip"
 
 # 指定檔案清單
-# archiveFiles -Path "C:\MyFolder" -Output "C:\output.zip" -List @("file1.txt", "file2.txt")
+# Compress-Files -Path "C:\MyFolder" -Output "C:\output.zip" -List @("file1.txt", "file2.txt")
 
 # 設定壓縮等級
-# archiveFiles -Path "C:\MyFolder" -Output "C:\output.zip" -CompressionLevel 9 
+# Compress-Files -Path "C:\MyFolder" -Output "C:\output.zip" -CompressionLevel 9 
