@@ -1,8 +1,8 @@
 $PSJwtModuleHome = 'https://raw.githubusercontent.com/hunandy14/autoCompare/refs/heads/dev/2.0/src'
 
 $scriptPaths = @(
-    "ConvertFrom-OctalString.ps1",
-    "Invoke-Git.ps1",
+    "unity/ConvertFrom-OctalString.ps1",
+    "unity/Invoke-Git.ps1",
     "diffCommit.ps1",
     "archiveFiles.ps1",
     "archiveCommit.ps1",
