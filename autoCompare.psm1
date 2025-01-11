@@ -12,6 +12,8 @@ Export-ModuleMember -Function @(
     'archiveFiles',
     'archiveCommit',
     'archiveDiffCommit'
-) 
+) -Alias @(
+    'acvDC'
+)
 
 # 引用模組: Import-Module .\autoCompare.psm1
