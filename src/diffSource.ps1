@@ -79,13 +79,24 @@ $ArgumentList = @"
 "@ -split("`r`n|`n")
 
     # 追加參數
-    if ($IgnoreSameFile){ $ArgumentList += "-cfg Settings/ShowIdentical=0" }
-    if ($IgnoreWhite){ $ArgumentList += "-ignorews"; $ArgumentList += "-ignoreblanklines"; $ArgumentList += "-ignoreeol" }
-    $ArgumentList = $ArgumentList -replace("^ +") -join(" ")
-    # 開始比較
+    $ArgumentList += @(
+        $(if ($IgnoreSameFile) {
+            "-cfg Settings/ShowIdentical=0"
+        })
+        $(if ($IgnoreWhite) {
+            "-ignorews"
+            "-ignoreblanklines"
+            "-ignoreeol"
+        })
+    )
+    
+    # 執行比較並開啟結果
     Write-Host "WinMergeU $ArgumentList" -ForegroundColor DarkGray
-    Start-Process WinMergeU $ArgumentList -Wait
+    Start-Process WinMergeU -ArgumentList $ArgumentList -Wait
+    
+    # 開啟結果
     if (!$NoOpenHTML) { explorer.exe $Output }
+    
     return $Output
 }} # diffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html'
 # diffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -NoOpenHTML -IgnoreSameFile -IgnoreWhite
