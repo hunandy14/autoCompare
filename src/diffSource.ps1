@@ -61,8 +61,8 @@ function diffSource {
     }
     # 參數設定
 $ArgumentList = @"
-    "$LeftPath"
-    "$RightPath"
+    $LeftPath
+    $RightPath
     -minimize
     -noninteractive
     -noprefs
@@ -75,21 +75,15 @@ $ArgumentList = @"
     -r
     -u
     -or "$Output"
+    $(if ($IgnoreSameFile) { "-cfg Settings/ShowIdentical=0" })
+    $(if ($IgnoreWhite) {
+        "-ignorews"
+        "-ignoreblanklines"
+        "-ignoreeol"
+    })
     $Argument
-"@ -split("`r`n|`n")
+"@ -split("`r`n|`n") -match '\S'
 
-    # 追加參數
-    $ArgumentList += @(
-        $(if ($IgnoreSameFile) {
-            "-cfg Settings/ShowIdentical=0"
-        })
-        $(if ($IgnoreWhite) {
-            "-ignorews"
-            "-ignoreblanklines"
-            "-ignoreeol"
-        })
-    )
-    
     # 執行比較並開啟結果
     Write-Host "WinMergeU $ArgumentList" -ForegroundColor DarkGray
     Start-Process WinMergeU -ArgumentList $ArgumentList -Wait
@@ -110,3 +104,5 @@ $ArgumentList = @"
 # diffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Include @("js/aaa/DMWA0010.js")
 # diffSource 'Z:\diffSource\before' 'Z:\diffSource\after' -Output 'Z:\diffSource\Report\index.html' -Include (Get-Content "Z:\diffSource\list.txt") -Filter "!xml\"
 # (Get-ChildItem 'C:\Users\hunan\AppData\Local\Temp\archiveCommit' -Directory)|diffSource
+
+# diffSource 'doc_develop_update\INIT' 'doc_develop_update\master' -Output 'doc_develop_update\index.html'
