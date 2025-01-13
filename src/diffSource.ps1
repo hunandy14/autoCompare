@@ -2,31 +2,39 @@
 function diffSource {
     [Alias("cmpSrc")]
     param (
+        # 輸入參數
         [Parameter(Position = 0, ParameterSetName = "A", Mandatory)]
         [String] $LeftPath,
         [Parameter(Position = 1, ParameterSetName = "A", Mandatory)]
         [String] $RightPath,
         [Parameter(ParameterSetName = "")]
         [String] $Output,
+        
+        # WinMerge 參數
         [Parameter(ParameterSetName = "")]
-        [Int64 ] $Line = -1,
+        [Int64 ] $Line = -1, # 行數
         [Parameter(ParameterSetName = "")]
-        [String] $Filter,
+        [String] $Filter, # 過濾條件
         [Parameter(ParameterSetName = "")]
-        [Object] $Include,
-        [String] $Argument,
-        [Switch] $IgnoreSameFile,
-        [Switch] $IgnoreWhite,
-        [Switch] $NoOpenHTML,
-        [Switch] $CompareZipSecondLayer,
+        [Object] $Include, # 包含條件
+        [Switch] $IgnoreSameFile, # 忽略相同檔案
+        [Switch] $IgnoreWhite, # 忽略空白行
+        [String] $Argument, # 自定義參數
+        
+        # 其他參數
+        [Switch] $NoOpenHTML, # 不開啟HTML
+        [Switch] $CompareZipSecondLayer, # 比較壓縮檔中第二層資料夾(資料夾名必須與壓縮檔名一致)
         [Parameter(ValueFromPipeline, ParameterSetName = "B")]
         [Object] $InputObject
     )
     Begin { $ItemObject = @() } Process { if ($InputObject) { $ItemObject += $InputObject.FullName } } End {
+    
     # 輸入為 InputObject 時
     if ($InputObject) { $LeftPath = $ItemObject[0]; $RightPath = $ItemObject[1]; }
+    
     # 安裝WinMerge (已安裝會自動退出)
     Install-WinMerge|Out-Null
+    
     # 測試路徑
     if ($LeftPath  -and !(Test-Path $LeftPath )) { Write-Host "Error:: LeftPath is not exist."  -ForegroundColor:Yellow ; return }
     if ($RightPath -and !(Test-Path $RightPath)) { Write-Host "Error:: RightPath is not exist."  -ForegroundColor:Yellow; return }
@@ -59,6 +67,7 @@ function diffSource {
     if ($Include) {
         $Filter = "$Filter;" + ($Include -replace ".*?(\\|/)" -join ";")
     }
+    
     # 參數設定
 $ArgumentList = @"
     $LeftPath
