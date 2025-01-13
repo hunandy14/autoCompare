@@ -9,10 +9,10 @@
 
 # 導出所有公開函數
 Export-ModuleMember -Function @(
-    'diffCommit',
-    'archiveFiles',
+    'archiveDiffCommit',
     'archiveCommit',
-    'archiveDiffCommit'
+    'diffCommit',
+    'diffSource'
 ) -Alias @(
     'acvDC',
     'cmpSrc'

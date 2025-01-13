@@ -69,7 +69,7 @@ function diffSource {
     }
     
     # 參數設定
-$ArgumentList = @"
+$ArgumentList = (@"
     $LeftPath
     $RightPath
     -minimize
@@ -91,7 +91,7 @@ $ArgumentList = @"
         "-ignoreeol"
     })
     $Argument
-"@ -split("`r`n|`n") -match '\S'
+"@ -split "\s*[\r\n]+\s*").Trim()
 
     # 執行比較並開啟結果
     Write-Host "WinMergeU $ArgumentList" -ForegroundColor DarkGray
