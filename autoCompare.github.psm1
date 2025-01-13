@@ -2,6 +2,7 @@ $PSJwtModuleHome = 'https://raw.githubusercontent.com/hunandy14/autoCompare/refs
 
 $scriptPaths = @(
     "unity/ConvertFrom-OctalString.ps1",
+    "unity/Install-WinMerge.ps1",
     "unity/Invoke-Git.ps1",
     "diffCommit.ps1",
     "archiveCommit.ps1",
