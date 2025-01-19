@@ -2,31 +2,39 @@
 function diffSource {
     [Alias("cmpSrc")]
     param (
+        # 輸入參數
         [Parameter(Position = 0, ParameterSetName = "A", Mandatory)]
         [String] $LeftPath,
         [Parameter(Position = 1, ParameterSetName = "A", Mandatory)]
         [String] $RightPath,
         [Parameter(ParameterSetName = "")]
         [String] $Output,
+        
+        # WinMerge 參數
         [Parameter(ParameterSetName = "")]
-        [Int64 ] $Line = -1,
+        [Int64 ] $Line = -1, # 行數
         [Parameter(ParameterSetName = "")]
-        [String] $Filter,
+        [String] $Filter, # 過濾條件
         [Parameter(ParameterSetName = "")]
-        [Object] $Include,
-        [String] $Argument,
-        [Switch] $IgnoreSameFile,
-        [Switch] $IgnoreWhite,
-        [Switch] $NoOpenHTML,
-        [Switch] $CompareZipSecondLayer,
+        [Object] $Include, # 包含條件
+        [Switch] $IgnoreSameFile, # 忽略相同檔案
+        [Switch] $IgnoreWhite, # 忽略空白行
+        [String] $Argument, # 自定義參數
+        
+        # 其他參數
+        [Switch] $NoOpenHTML, # 不開啟HTML
+        [Switch] $CompareZipSecondLayer, # 比較壓縮檔中第二層資料夾(資料夾名必須與壓縮檔名一致)
         [Parameter(ValueFromPipeline, ParameterSetName = "B")]
         [Object] $InputObject
     )
     Begin { $ItemObject = @() } Process { if ($InputObject) { $ItemObject += $InputObject.FullName } } End {
+    
     # 輸入為 InputObject 時
     if ($InputObject) { $LeftPath = $ItemObject[0]; $RightPath = $ItemObject[1]; }
+    
     # 安裝WinMerge (已安裝會自動退出)
     Install-WinMerge|Out-Null
+    
     # 測試路徑
     if ($LeftPath  -and !(Test-Path $LeftPath )) { Write-Host "Error:: LeftPath is not exist."  -ForegroundColor:Yellow ; return }
     if ($RightPath -and !(Test-Path $RightPath)) { Write-Host "Error:: RightPath is not exist."  -ForegroundColor:Yellow; return }
@@ -39,28 +47,31 @@ function diffSource {
     
     # 比較壓縮檔中第二層資料夾(資料夾名必須與壓縮檔名一致)
     if ($CompareZipSecondLayer) {
-        # LeftPath
-        $File = Get-Item $LeftPath
-        if($File.Extension -eq '.zip'){
-            $ExpandPath = $env:TEMP+"\"+$File.BaseName
-            Expand-Archive $File.FullName $ExpandPath -Force
-        } $LeftPath = $ExpandPath+"\"+$File.BaseName
-        # RightPath
-        $File = Get-Item $RightPath
-        if($File.Extension -eq '.zip'){
-            $ExpandPath = $env:TEMP+"\"+$File.BaseName
-            Expand-Archive $File.FullName $ExpandPath -Force
-        } $RightPath = $ExpandPath+"\"+$File.BaseName
+        function Expand-ZipSecondLayer {
+            param([string]$Path)
+            
+            $File = Get-Item $Path
+            if ($File.Extension -eq '.zip') {
+                $ExpandPath = Join-Path $env:TEMP $File.BaseName
+                Expand-Archive $File.FullName $ExpandPath -Force
+                return Join-Path $ExpandPath $File.BaseName
+            }
+            return $Path
+        }
+
+        $LeftPath = Expand-ZipSecondLayer $LeftPath
+        $RightPath = Expand-ZipSecondLayer $RightPath
     }
     
     # 處理Incule參數，獲取FileName
     if ($Include) {
         $Filter = "$Filter;" + ($Include -replace ".*?(\\|/)" -join ";")
     }
+    
     # 參數設定
-$ArgumentList = @"
-    "$LeftPath"
-    "$RightPath"
+$ArgumentList = (@"
+    $LeftPath
+    $RightPath
     -minimize
     -noninteractive
     -noprefs
@@ -73,17 +84,22 @@ $ArgumentList = @"
     -r
     -u
     -or "$Output"
+    $(if ($IgnoreSameFile) { "-cfg Settings/ShowIdentical=0" })
+    $(if ($IgnoreWhite) {
+        "-ignorews"
+        "-ignoreblanklines"
+        "-ignoreeol"
+    })
     $Argument
-"@ -split("`r`n|`n")
+"@ -split "\s*[\r\n]+\s*").Trim()
 
-    # 追加參數
-    if ($IgnoreSameFile){ $ArgumentList += "-cfg Settings/ShowIdentical=0" }
-    if ($IgnoreWhite){ $ArgumentList += "-ignorews"; $ArgumentList += "-ignoreblanklines"; $ArgumentList += "-ignoreeol" }
-    $ArgumentList = $ArgumentList -replace("^ +") -join(" ")
-    # 開始比較
+    # 執行比較並開啟結果
     Write-Host "WinMergeU $ArgumentList" -ForegroundColor DarkGray
-    Start-Process WinMergeU $ArgumentList -Wait
+    Start-Process WinMergeU -ArgumentList $ArgumentList -Wait
+    
+    # 開啟結果
     if (!$NoOpenHTML) { explorer.exe $Output }
+    
     return $Output
 }} # diffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html'
 # diffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -NoOpenHTML -IgnoreSameFile -IgnoreWhite
@@ -97,3 +113,5 @@ $ArgumentList = @"
 # diffSource 'Z:\Work\INIT' 'Z:\Work\master' -Output 'Z:\Work\Diff\index.html' -Include @("js/aaa/DMWA0010.js")
 # diffSource 'Z:\diffSource\before' 'Z:\diffSource\after' -Output 'Z:\diffSource\Report\index.html' -Include (Get-Content "Z:\diffSource\list.txt") -Filter "!xml\"
 # (Get-ChildItem 'C:\Users\hunan\AppData\Local\Temp\archiveCommit' -Directory)|diffSource
+
+# diffSource 'doc_develop_update\INIT' 'doc_develop_update\master' -Output 'doc_develop_update\index.html'
